@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowRight, CheckCircle, Lock, Tag } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
 import { supabase } from '../lib/supabase';
+import { buildWhatsAppOrderMessage, getWhatsAppUrl } from '../lib/whatsapp';
+import WhatsAppIcon from '../components/WhatsAppIcon';
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -40,6 +43,9 @@ export default function Checkout() {
   const subtotalAfterDiscount = total - discountAmount;
   const tax = Math.round(subtotalAfterDiscount * 0.18);
   const finalTotal = subtotalAfterDiscount + tax;
+  const whatsappOrderUrl = getWhatsAppUrl(
+    buildWhatsAppOrderMessage(items, finalTotal, formData)
+  );
 
   if (items.length === 0) {
     return (
@@ -156,9 +162,19 @@ export default function Checkout() {
   };
 
   return (
-    <div className="bg-black min-h-screen pt-20">
+    <motion.div
+      className="bg-black min-h-screen pt-20"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-12">
+        <motion.div
+          className="mb-12"
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45 }}
+        >
           <h1 className="text-4xl font-bold text-white mb-4">Checkout</h1>
           <div className="flex items-center gap-4 text-sm text-gray-400">
             <Link to="/cart" className="hover:text-amber-400">
@@ -169,7 +185,7 @@ export default function Checkout() {
             <span className="text-gray-600">›</span>
             <span>Confirmation</span>
           </div>
-        </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Checkout Form */}
@@ -377,13 +393,25 @@ export default function Checkout() {
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={loading || success}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
-              >
-                {loading ? 'Processing Order...' : 'Place Order'} {!loading && <ArrowRight className="w-5 h-5" />}
-              </button>
+              <div className="space-y-4">
+                <button
+                  type="submit"
+                  disabled={loading || success}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
+                >
+                  {loading ? 'Processing Order...' : 'Place Order'} {!loading && <ArrowRight className="w-5 h-5" />}
+                </button>
+
+                <a
+                  href={whatsappOrderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all"
+                >
+                  <WhatsAppIcon className="w-5 h-5" />
+                  Order on WhatsApp
+                </a>
+              </div>
             </form>
           </div>
 
@@ -441,6 +469,6 @@ export default function Checkout() {
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Menu, X, ShoppingCart, MessageCircle } from 'lucide-react';
+import { Menu, X, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import WhatsAppIcon from './WhatsAppIcon';
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
@@ -60,8 +61,8 @@ export default function Header() {
               rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
             >
-              <MessageCircle className="w-4 h-4" />
-              Chat
+              <WhatsAppIcon className="w-4 h-4" />
+              WhatsApp
             </a>
 
             <button
@@ -92,7 +93,7 @@ export default function Header() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors justify-center"
               >
-                <MessageCircle className="w-4 h-4" />
+                <WhatsAppIcon className="w-4 h-4" />
                 WhatsApp
               </a>
             </div>

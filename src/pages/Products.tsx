@@ -1,65 +1,24 @@
 import { useState } from 'react';
 import { ShoppingCart, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useCart } from '../context/CartContext';
+import { productCatalog } from '../data/products';
 
-const products = [
-  {
-    id: '1',
-    name: "Bubbly'z Sanitary Pads - Mint Cool (35 Pcs, XXL/XXXL)",
-    category: 'Women Care',
-    price: 399,
-    image_url: '/WhatsApp_Image_2026-05-17_at_1.17.15_PM.jpeg',
-    features: ['Mint cool freshness', 'Extra soft', 'Leak lock', '12h protection'],
-    description: 'Premium sanitary pads with mint cool freshness technology',
-  },
-  {
-    id: '2',
-    name: "Bubbly'z Sanitary Pads - Anion Chip (35 Pcs, XXL)",
-    category: 'Women Care',
-    price: 399,
-    image_url: '/WhatsApp_Image_2026-05-17_at_1.23.08_PM.jpeg',
-    features: ['Anion chip technology', 'Ultra soft', 'Leak lock', '12h protection'],
-    description: 'Advanced anion pads for odor neutralization and freshness',
-  },
-  {
-    id: '3',
-    name: 'Bubbly\'z Premium Baby Diapers (Newborn)',
-    category: 'Baby Care',
-    price: 299,
-    image_url: '/WhatsApp_Image_2026-05-11_at_4.29.57_PM.jpeg',
-    features: ['Hypoallergenic', 'High absorbency', 'Soft layers', 'Flexible fit'],
-    description: 'Gentle and protective baby diapers for newborns',
-  },
-  {
-    id: '4',
-    name: 'Mishfa Care Feminine Hygiene Kit',
-    category: 'Women Care',
-    price: 599,
-    image_url: '/WhatsApp_Image_2026-05-11_at_4.29.58_PM.jpeg',
-    features: ['Complete solution', 'Travel friendly', 'Premium quality', 'Value pack'],
-    description: 'Complete feminine hygiene essentials in one premium kit',
-  },
-  {
-    id: '5',
-    name: "Bubbly'z Sanitary Pads - Extra Long (320mm)",
-    category: 'Women Care',
-    price: 449,
-    image_url: '/WhatsApp_Image_2026-05-17_at_1.17.55_PM.jpeg',
-    features: ['Extra long protection', 'Super absorbent', 'Anion strip', 'Overnight protection'],
-    description: 'Extra long pads for maximum coverage and overnight protection',
-  },
-];
+const products = productCatalog.map((product) => ({
+  ...product,
+  categoryLabel: 'Women Care',
+}));
 
 export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { addItem, items } = useCart();
   const [addedProducts, setAddedProducts] = useState<{ [key: string]: boolean }>({});
 
-  const categories = ['Women Care', 'Baby Care'];
+  const categories = ['Women Care'];
 
   const filteredProducts = selectedCategory
-    ? products.filter((p) => p.category === selectedCategory)
+    ? products.filter((p) => p.categoryLabel === selectedCategory)
     : products;
 
   const handleAddToCart = (product: (typeof products)[0]) => {
@@ -83,15 +42,26 @@ export default function Products() {
   };
 
   return (
-    <div className="bg-black min-h-screen">
+    <motion.div
+      className="bg-black min-h-screen"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: 'easeOut' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         {/* Header */}
-        <div className="mb-12">
+        <motion.div
+          className="mb-12"
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.45 }}
+        >
           <h1 className="text-5xl font-bold text-white mb-4">Our Products</h1>
           <p className="text-xl text-gray-300">
-            Premium hygiene products for women and babies
+            Premium sanitary pads curated for everyday comfort and freshness
           </p>
-        </div>
+        </motion.div>
 
         {/* Filters */}
         <div className="mb-12 flex flex-wrap gap-4">
@@ -121,12 +91,15 @@ export default function Products() {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {filteredProducts.map((product, idx) => (
-            <div
+            <motion.div
               key={product.id}
               className="group bg-gray-900 border border-amber-600 rounded-xl overflow-hidden hover:shadow-2xl hover:shadow-amber-600/50 transition-all transform hover:scale-105 animate-fadeIn"
-              style={{ animationDelay: `${idx * 100}ms` }}
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.4, delay: idx * 0.08 }}
             >
               <div className="relative aspect-square overflow-hidden bg-black">
                 <img
@@ -138,7 +111,7 @@ export default function Products() {
               </div>
 
               <div className="p-6">
-                <p className="text-amber-500 text-sm font-semibold mb-2">{product.category}</p>
+                <p className="text-amber-500 text-sm font-semibold mb-2">{product.categoryLabel}</p>
                 <h3 className="text-lg font-bold text-white mb-3 leading-tight line-clamp-2">
                   {product.name}
                 </h3>
@@ -157,11 +130,20 @@ export default function Products() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-2xl font-bold text-amber-400">₹{product.price}</span>
+                <div className="flex items-end justify-between mb-3 gap-3">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-bold text-amber-400">₹{product.price}/- INR</span>
+                      {product.original_price && (
+                        <span className="text-sm text-gray-500 line-through">₹{product.original_price}</span>
+                      )}
+                    </div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Discount Price</p>
+                  </div>
                   <button
                     onClick={() => handleAddToCart(product)}
                     className="bg-amber-600 hover:bg-amber-700 text-white p-3 rounded-lg transition-all transform hover:scale-110 flex items-center justify-center"
+                    aria-label={`Add ${product.name} to cart`}
                   >
                     <ShoppingCart className="w-5 h-5" />
                   </button>
@@ -182,12 +164,18 @@ export default function Products() {
                   View Cart
                 </Link>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Bulk Order CTA */}
-        <div className="mt-20 bg-gradient-to-r from-amber-900 to-black border border-amber-600 rounded-xl p-12 text-center">
+        <motion.div
+          className="mt-20 bg-gradient-to-r from-amber-900 to-black border border-amber-600 rounded-xl p-12 text-center"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.45 }}
+        >
           <h2 className="text-3xl font-bold text-white mb-4">Interested in Bulk Orders?</h2>
           <p className="text-gray-300 mb-8 text-lg">
             Get special pricing and dedicated support for wholesale and distributor orders
@@ -208,8 +196,8 @@ export default function Products() {
               Email Sales Team
             </a>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }

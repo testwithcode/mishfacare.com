@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '../types';
+import { productCatalogById } from '../data/products';
 
 export interface CartItemType {
   product: Product;
@@ -18,11 +19,37 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const hydrateCartItems = (): CartItemType[] => {
+  const saved = localStorage.getItem('mishfa_cart');
+
+  if (!saved) {
+    return [];
+  }
+
+  try {
+    const parsedItems = JSON.parse(saved) as CartItemType[];
+
+    return parsedItems
+      .map((item) => {
+        const currentProduct = productCatalogById[item.product.id];
+
+        if (!currentProduct) {
+          return null;
+        }
+
+        return {
+          ...item,
+          product: currentProduct,
+        };
+      })
+      .filter((item): item is CartItemType => Boolean(item));
+  } catch {
+    return [];
+  }
+};
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItemType[]>(() => {
-    const saved = localStorage.getItem('mishfa_cart');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [items, setItems] = useState<CartItemType[]>(hydrateCartItems);
 
   useEffect(() => {
     localStorage.setItem('mishfa_cart', JSON.stringify(items));

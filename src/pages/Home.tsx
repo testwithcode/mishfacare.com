@@ -1,6 +1,13 @@
 import { ArrowRight, Heart, Shield, Sparkles, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { productCatalog } from '../data/products';
+
+const featuredProducts = productCatalog.map((product) => ({
+  ...product,
+  categoryLabel: 'Women Care',
+}));
 
 export default function Home() {
   const [imageIndex, setImageIndex] = useState(0);
@@ -17,7 +24,12 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-black">
+    <motion.div
+      className="bg-black"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-30 animate-pulse">
@@ -26,7 +38,12 @@ export default function Home() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
-          <div className="animate-slideInLeft">
+          <motion.div
+            className="animate-slideInLeft"
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+          >
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Gentle Care for Women & Babies
             </h1>
@@ -47,9 +64,14 @@ export default function Home() {
                 Our Story
               </Link>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="relative animate-slideInRight">
+          <motion.div
+            className="relative animate-slideInRight"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <div className="relative aspect-square rounded-2xl overflow-hidden border-2 border-amber-600 shadow-2xl">
               <img
                 src={heroImages[imageIndex]}
@@ -58,12 +80,18 @@ export default function Home() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Trust Section */}
-      <section className="py-16 border-t border-amber-600 relative">
+      <motion.section
+        className="py-16 border-t border-amber-600 relative"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="absolute inset-0 opacity-20 animate-pulse">
           <div className="absolute top-0 right-0 w-96 h-96 bg-amber-600 rounded-full blur-3xl opacity-10"></div>
         </div>
@@ -103,67 +131,59 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Featured Products */}
-      <section className="py-20 border-t border-amber-600">
+      <motion.section
+        className="py-20 border-t border-amber-600"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-white mb-4">Featured Products</h2>
             <p className="text-gray-400 text-lg">Our bestselling premium care products</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                name: "Bubbly'z Sanitary Pads - Mint Cool",
-                price: '₹399',
-                image: '/WhatsApp_Image_2026-05-17_at_1.17.15_PM.jpeg',
-                category: 'Women Care',
-              },
-              {
-                name: "Bubbly'z Sanitary Pads - Anion Chip",
-                price: '₹399',
-                image: '/WhatsApp_Image_2026-05-17_at_1.23.08_PM.jpeg',
-                category: 'Women Care',
-              },
-              {
-                name: 'Bubbly\'z Premium Baby Diapers',
-                price: '₹299',
-                image: '/WhatsApp_Image_2026-05-11_at_4.29.57_PM.jpeg',
-                category: 'Baby Care',
-              },
-              {
-                name: 'Mishfa Care Feminine Hygiene Kit',
-                price: '₹599',
-                image: '/WhatsApp_Image_2026-05-11_at_4.29.58_PM.jpeg',
-                category: 'Women Care',
-              },
-            ].map((product, idx) => (
-              <div
-                key={idx}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {featuredProducts.map((product, idx) => (
+              <motion.div
+                key={product.id}
                 className="group bg-gray-900 border border-amber-600 rounded-xl overflow-hidden hover:shadow-2xl hover:shadow-amber-600/50 transition-all transform hover:scale-105 animate-fadeIn"
-                style={{ animationDelay: `${idx * 150}ms` }}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.4, delay: idx * 0.08 }}
               >
                 <div className="relative aspect-square overflow-hidden">
                   <img
-                    src={product.image}
+                    src={product.image_url}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 </div>
                 <div className="p-4">
-                  <p className="text-amber-500 text-sm font-semibold mb-2">{product.category}</p>
+                  <p className="text-amber-500 text-sm font-semibold mb-2">{product.categoryLabel}</p>
                   <h3 className="text-white font-bold mb-2 line-clamp-2">{product.name}</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-bold text-amber-400">{product.price}</span>
-                    <button className="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-lg transition-colors">
+                  <div className="flex justify-between items-end gap-3">
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl font-bold text-amber-400">₹{product.price}/- INR</span>
+                        {product.original_price && (
+                          <span className="text-sm text-gray-500 line-through">₹{product.original_price}</span>
+                        )}
+                      </div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Discount Price</p>
+                    </div>
+                    <button className="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-lg transition-colors" aria-label={`Open ${product.name}`}>
                       <ArrowRight className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -176,10 +196,16 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Women Care Section */}
-      <section className="py-20 border-t border-amber-600 bg-gradient-to-r from-gray-900 to-black">
+      <motion.section
+        className="py-20 border-t border-amber-600 bg-gradient-to-r from-gray-900 to-black"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="animate-slideInLeft">
@@ -217,7 +243,7 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Baby Care Section */}
       <section className="py-20 border-t border-amber-600">
@@ -261,7 +287,13 @@ export default function Home() {
       </section>
 
       {/* Distributor CTA */}
-      <section className="py-20 border-t border-amber-600 bg-gradient-to-r from-amber-900 to-black relative overflow-hidden">
+      <motion.section
+        className="py-20 border-t border-amber-600 bg-gradient-to-r from-amber-900 to-black relative overflow-hidden"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="absolute inset-0 opacity-10 animate-pulse">
           <div className="absolute inset-0 bg-gradient-to-r from-amber-600 to-transparent"></div>
         </div>
@@ -278,10 +310,17 @@ export default function Home() {
             Apply Now <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
-      </section>
+      </motion.section>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 border-t border-amber-600">
+      <motion.section
+        id="faq"
+        className="py-20 border-t border-amber-600"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-center text-white mb-12">Frequently Asked Questions</h2>
 
@@ -315,10 +354,16 @@ export default function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Contact CTA */}
-      <section className="py-16 border-t border-amber-600 bg-black">
+      <motion.section
+        className="py-16 border-t border-amber-600 bg-black"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.45 }}
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">Need Help?</h2>
           <p className="text-gray-300 mb-8">
@@ -341,7 +386,7 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
-    </div>
+      </motion.section>
+    </motion.div>
   );
 }
