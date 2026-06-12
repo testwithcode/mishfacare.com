@@ -1,19 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, CreditCard as Edit, Plus, X, AlertCircle, CheckCircle, Upload, RefreshCw, ChevronDown, Copy } from 'lucide-react';
+import { Trash2, CreditCard as Edit, Plus, X, AlertCircle, CheckCircle, Upload, RefreshCw } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  cost_price?: number;
-  description: string;
-  sku?: string;
-  stock_count: number;
-  image_url: string;
-}
+import type { Product } from '../types';
+import { CATEGORY_LABELS, normalizeProduct } from '../lib/products';
 
 interface Coupon {
   id: string;
@@ -35,6 +25,9 @@ export default function AdminProducts() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState<'products' | 'coupons'>('products');
+  const [productSearch, setProductSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | Product['category']>('all');
 
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -42,7 +35,7 @@ export default function AdminProducts() {
   const [imagePreview, setImagePreview] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const [formData, setFormData] = useState<Partial<Product>>({
+  const emptyProductForm: Partial<Product> = {
     name: '',
     category: 'sanitary_pads',
     price: 0,
@@ -51,7 +44,10 @@ export default function AdminProducts() {
     sku: '',
     stock_count: 0,
     image_url: '',
-  });
+    is_active: true,
+  };
+
+  const [formData, setFormData] = useState<Partial<Product>>(emptyProductForm);
 
   const [showAddCoupon, setShowAddCoupon] = useState(false);
   const [couponData, setCouponData] = useState({
@@ -110,7 +106,7 @@ export default function AdminProducts() {
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
-      setProducts(data || []);
+      setProducts(((data ?? []) as Product[]).map(normalizeProduct));
       setError('');
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load products';
@@ -193,6 +189,7 @@ export default function AdminProducts() {
         sku: formData.sku || '',
         stock_count: parseInt(formData.stock_count?.toString() || '0'),
         image_url: imageUrl || '',
+        is_active: formData.is_active ?? true,
       };
 
       if (editingProduct) {
@@ -212,16 +209,7 @@ export default function AdminProducts() {
         setSuccess('Product added successfully!');
       }
 
-      setFormData({
-        name: '',
-        category: 'sanitary_pads',
-        price: 0,
-        cost_price: 0,
-        description: '',
-        sku: '',
-        stock_count: 0,
-        image_url: '',
-      });
+      setFormData(emptyProductForm);
       setEditingProduct(null);
       setShowAddProduct(false);
       setImagePreview('');
@@ -328,21 +316,47 @@ export default function AdminProducts() {
   };
 
   const handleCancelEdit = () => {
-    setFormData({
-      name: '',
-      category: 'sanitary_pads',
-      price: 0,
-      cost_price: 0,
-      description: '',
-      sku: '',
-      stock_count: 0,
-      image_url: '',
-    });
+    setFormData(emptyProductForm);
     setEditingProduct(null);
     setShowAddProduct(false);
     setImagePreview('');
     setImageFile(null);
   };
+
+  const handleToggleProductStatus = async (product: Product) => {
+    try {
+      setError('');
+      setSuccess('');
+
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ is_active: !product.is_active })
+        .eq('id', product.id);
+
+      if (updateError) throw updateError;
+
+      setSuccess(`Product marked as ${product.is_active ? 'inactive' : 'active'}.`);
+      await fetchProducts();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to update product status';
+      setError(errorMsg);
+      console.error('Error updating product status:', err);
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+      product.sku?.toLowerCase().includes(productSearch.toLowerCase()) ||
+      product.description.toLowerCase().includes(productSearch.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' ? product.is_active : !product.is_active);
+    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
+
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-black pt-20">
@@ -416,16 +430,7 @@ export default function AdminProducts() {
               onClick={() => {
                 setShowAddProduct(true);
                 setEditingProduct(null);
-                setFormData({
-                  name: '',
-                  category: 'sanitary_pads',
-                  price: 0,
-                  cost_price: 0,
-                  description: '',
-                  sku: '',
-                  stock_count: 0,
-                  image_url: '',
-                });
+                setFormData(emptyProductForm);
                 setImagePreview('');
                 setImageFile(null);
               }}
@@ -434,6 +439,40 @@ export default function AdminProducts() {
               <Plus className="w-5 h-5" />
               Add New Product
             </button>
+
+            <div className="mb-8 grid gap-4 rounded-xl border border-amber-600 bg-gray-900 p-4 lg:grid-cols-[minmax(0,1fr)_180px_220px]">
+              <input
+                type="text"
+                value={productSearch}
+                onChange={(e) => setProductSearch(e.target.value)}
+                placeholder="Search by name, SKU, or description"
+                className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="all">All statuses</option>
+                <option value="active">Active only</option>
+                <option value="inactive">Inactive only</option>
+              </select>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
+                className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                <option value="all">All categories</option>
+                {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <div className="text-sm text-gray-400 lg:col-span-3">
+                Showing {filteredProducts.length} of {products.length} products
+              </div>
+            </div>
 
             {/* Product Form Modal */}
             {showAddProduct && (
@@ -475,7 +514,12 @@ export default function AdminProducts() {
                         </label>
                         <select
                           value={formData.category || 'sanitary_pads'}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              category: e.target.value as Product['category'],
+                            })
+                          }
                           className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                           required
                         >
@@ -535,18 +579,39 @@ export default function AdminProducts() {
                     </div>
 
                     {/* Stock Count */}
-                    <div>
-                      <label className="block text-white font-semibold mb-2">
-                        Stock Count
-                      </label>
-                      <input
-                        type="number"
-                        value={formData.stock_count || ''}
-                        onChange={(e) => setFormData({ ...formData, stock_count: parseInt(e.target.value) || 0 })}
-                        placeholder="0"
-                        min="0"
-                        className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                      />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-white font-semibold mb-2">
+                          Stock Count
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.stock_count || ''}
+                          onChange={(e) => setFormData({ ...formData, stock_count: parseInt(e.target.value) || 0 })}
+                          placeholder="0"
+                          min="0"
+                          className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-white font-semibold mb-2">
+                          Product Status
+                        </label>
+                        <select
+                          value={formData.is_active ? 'active' : 'inactive'}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              is_active: e.target.value === 'active',
+                            })
+                          }
+                          className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </div>
                     </div>
 
                     {/* Description */}
@@ -618,7 +683,7 @@ export default function AdminProducts() {
 
             {/* Products Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <div
                   key={product.id}
                   className="bg-gray-900 border border-amber-600 rounded-lg overflow-hidden hover:border-amber-500 transition-all group"
@@ -632,14 +697,21 @@ export default function AdminProducts() {
                   )}
 
                   <div className="p-4">
-                    <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{product.name}</h3>
+                    <div className="mb-3 flex items-start justify-between gap-3">
+                      <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{product.name}</h3>
+                      <span
+                        className={`inline-block whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold ${
+                          product.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                        }`}
+                      >
+                        {product.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
 
                     <div className="space-y-2 mb-4 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Category:</span>
-                        <span className="text-white font-semibold capitalize">
-                          {product.category.replace(/_/g, ' ')}
-                        </span>
+                        <span className="text-white font-semibold">{CATEGORY_LABELS[product.category]}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Price:</span>
@@ -669,17 +741,27 @@ export default function AdminProducts() {
                       <p className="text-gray-400 text-xs mb-4 line-clamp-2">{product.description}</p>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="grid gap-2 sm:grid-cols-3">
                       <button
                         onClick={() => handleEditProduct(product)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded transition-all text-sm font-semibold"
+                        className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded transition-all text-sm font-semibold"
                       >
                         <Edit className="w-4 h-4" />
                         Edit
                       </button>
                       <button
+                        onClick={() => handleToggleProductStatus(product)}
+                        className={`inline-flex items-center justify-center px-3 py-2 rounded transition-all text-sm font-semibold text-white ${
+                          product.is_active
+                            ? 'bg-gray-700 hover:bg-gray-600'
+                            : 'bg-green-600 hover:bg-green-700'
+                        }`}
+                      >
+                        {product.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
                         onClick={() => handleDeleteProduct(product.id)}
-                        className="flex-1 inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded transition-all text-sm font-semibold"
+                        className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded transition-all text-sm font-semibold"
                       >
                         <Trash2 className="w-4 h-4" />
                         Delete
@@ -690,9 +772,13 @@ export default function AdminProducts() {
               ))}
             </div>
 
-            {products.length === 0 && (
+            {filteredProducts.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-400 text-lg">No products yet. Click "Add New Product" to get started.</p>
+                <p className="text-gray-400 text-lg">
+                  {products.length === 0
+                    ? 'No products yet. Click "Add New Product" to get started.'
+                    : 'No products match the current filters.'}
+                </p>
               </div>
             )}
           </div>

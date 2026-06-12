@@ -2,15 +2,14 @@ import { ArrowRight, Heart, Shield, Sparkles, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { productCatalog } from '../data/products';
-
-const featuredProducts = productCatalog.map((product) => ({
-  ...product,
-  categoryLabel: 'Women Care',
-}));
+import type { Product } from '../types';
+import { CATEGORY_LABELS, fetchProducts } from '../lib/products';
 
 export default function Home() {
   const [imageIndex, setImageIndex] = useState(0);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [productsError, setProductsError] = useState('');
   const heroImages = [
     '/WhatsApp_Image_2026-05-17_at_1.17.15_PM.jpeg',
     '/WhatsApp_Image_2026-05-17_at_1.17.55_PM.jpeg',
@@ -21,6 +20,24 @@ export default function Home() {
       setImageIndex((prev) => (prev + 1) % heroImages.length);
     }, 5000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const loadFeaturedProducts = async () => {
+      try {
+        setProductsLoading(true);
+        const data = await fetchProducts({ activeOnly: true, featuredOnly: true });
+        setFeaturedProducts(data);
+        setProductsError('');
+      } catch (error) {
+        console.error('Failed to load featured products:', error);
+        setProductsError('Featured products are unavailable right now.');
+      } finally {
+        setProductsLoading(false);
+      }
+    };
+
+    void loadFeaturedProducts();
   }, []);
 
   return (
@@ -147,45 +164,69 @@ export default function Home() {
             <p className="text-gray-400 text-lg">Our bestselling premium care products</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {featuredProducts.map((product, idx) => (
-              <motion.div
-                key={product.id}
-                className="group bg-gray-900 border border-amber-600 rounded-xl overflow-hidden hover:shadow-2xl hover:shadow-amber-600/50 transition-all transform hover:scale-105 animate-fadeIn"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.4, delay: idx * 0.08 }}
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-                <div className="p-4">
-                  <p className="text-amber-500 text-sm font-semibold mb-2">{product.categoryLabel}</p>
-                  <h3 className="text-white font-bold mb-2 line-clamp-2">{product.name}</h3>
-                  <div className="flex justify-between items-end gap-3">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl font-bold text-amber-400">₹{product.price}/- INR</span>
-                        {product.original_price && (
-                          <span className="text-sm text-gray-500 line-through">₹{product.original_price}</span>
-                        )}
+          {productsLoading ? (
+            <div className="text-center py-12 text-gray-400">Loading featured products...</div>
+          ) : productsError ? (
+            <div className="max-w-2xl mx-auto rounded-xl border border-red-600 bg-red-950/40 px-6 py-5 text-center text-red-200">
+              {productsError}
+            </div>
+          ) : featuredProducts.length === 0 ? (
+            <div className="max-w-2xl mx-auto rounded-xl border border-amber-600 bg-gray-900 px-6 py-8 text-center text-gray-300">
+              No featured products are live right now.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {featuredProducts.map((product, idx) => (
+                <motion.div
+                  key={product.id}
+                  className="group bg-gray-900 border border-amber-600 rounded-xl overflow-hidden hover:shadow-2xl hover:shadow-amber-600/50 transition-all transform hover:scale-105 animate-fadeIn"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.4, delay: idx * 0.08 }}
+                >
+                  <div className="relative aspect-square overflow-hidden bg-black">
+                    {product.image_url ? (
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-gray-500">
+                        Image unavailable
                       </div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Discount Price</p>
-                    </div>
-                    <button className="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-lg transition-colors" aria-label={`Open ${product.name}`}>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  <div className="p-4">
+                    <p className="text-amber-500 text-sm font-semibold mb-2">
+                      {CATEGORY_LABELS[product.category]}
+                    </p>
+                    <h3 className="text-white font-bold mb-2 line-clamp-2">{product.name}</h3>
+                    <div className="flex justify-between items-end gap-3">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-bold text-amber-400">₹{product.price}/- INR</span>
+                          {product.original_price && (
+                            <span className="text-sm text-gray-500 line-through">₹{product.original_price}</span>
+                          )}
+                        </div>
+                        <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Discount Price</p>
+                      </div>
+                      <Link
+                        to="/products"
+                        className="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded-lg transition-colors"
+                        aria-label={`Browse products including ${product.name}`}
+                      >
+                        <ArrowRight className="w-5 h-5" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Link

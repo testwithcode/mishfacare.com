@@ -44,7 +44,13 @@ export default function Checkout() {
   const tax = Math.round(subtotalAfterDiscount * 0.18);
   const finalTotal = subtotalAfterDiscount + tax;
   const whatsappOrderUrl = getWhatsAppUrl(
-    buildWhatsAppOrderMessage(items, finalTotal, formData)
+    buildWhatsAppOrderMessage(items, finalTotal, formData, {
+      subtotal: total,
+      discountAmount,
+      tax,
+      finalTotal,
+      appliedCouponCode: appliedCoupon?.code || null,
+    })
   );
 
   if (items.length === 0) {

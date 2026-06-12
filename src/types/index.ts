@@ -8,8 +8,11 @@ export interface Product {
   image_url: string;
   features: string[];
   is_featured: boolean;
+  is_active: boolean;
   stock_count: number;
   created_at: string;
+  cost_price?: number;
+  sku?: string;
 }
 
 export interface CartItem {

@@ -18,6 +18,14 @@ type CustomerDetails = {
   payment_method?: string;
 };
 
+type OrderTotals = {
+  subtotal?: number;
+  discountAmount?: number;
+  tax?: number;
+  finalTotal?: number;
+  appliedCouponCode?: string | null;
+};
+
 export function getWhatsAppUrl(message: string) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 }
@@ -25,7 +33,8 @@ export function getWhatsAppUrl(message: string) {
 export function buildWhatsAppOrderMessage(
   items: OrderItem[],
   total: number,
-  customerDetails?: CustomerDetails
+  customerDetails?: CustomerDetails,
+  totals?: OrderTotals
 ) {
   const lines = [
     'Hello Mishfa Care, I want to place this order:',
@@ -35,8 +44,27 @@ export function buildWhatsAppOrderMessage(
         `${index + 1}. ${item.product.name} x ${item.quantity} = INR ${item.product.price * item.quantity}`
     ),
     '',
-    `Order Total: INR ${total.toFixed(0)}`,
   ];
+
+  if (typeof totals?.subtotal === 'number') {
+    lines.push('', `Subtotal: INR ${totals.subtotal.toFixed(0)}`);
+
+    if (totals.discountAmount) {
+      lines.push(`Discount: -INR ${totals.discountAmount.toFixed(0)}`);
+    }
+
+    if (totals.appliedCouponCode) {
+      lines.push(`Coupon: ${totals.appliedCouponCode}`);
+    }
+
+    if (typeof totals.tax === 'number') {
+      lines.push(`Tax: INR ${totals.tax.toFixed(0)}`);
+    }
+
+    lines.push(`Order Total: INR ${(totals.finalTotal ?? total).toFixed(0)}`);
+  } else {
+    lines.push('', `Order Total: INR ${total.toFixed(0)}`);
+  }
 
   if (customerDetails) {
     const address = [customerDetails.address, customerDetails.city, customerDetails.state, customerDetails.pincode]

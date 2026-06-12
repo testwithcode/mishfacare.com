@@ -42,11 +42,11 @@ export default function ChatBot() {
     }
 
     if (lower.includes('price') || lower.includes('cost')) {
-      return "Our products are competitively priced. Sanitary pads start from ₹399, and we offer bulk discounts for distributors. Please visit our shop for detailed pricing or contact us at mishfacare@gmail.com.";
+      return "Our current featured Bubbly'z sanitary pad variants are available at a discount price of ₹249 each. You can view both products in the shop or contact us on WhatsApp for bulk pricing.";
     }
 
     if (lower.includes('order') || lower.includes('buy')) {
-      return "You can shop directly on our website or contact us for bulk orders. For wholesale inquiries, please fill out our distributor form or WhatsApp us at +91 79905 07301.";
+      return "You can shop directly on our website and place your order through checkout, or use the WhatsApp order option for quick confirmation. For wholesale inquiries, please fill out our distributor form or WhatsApp us at +91 79905 07301.";
     }
 
     if (lower.includes('distribution') || lower.includes('distributor')) {

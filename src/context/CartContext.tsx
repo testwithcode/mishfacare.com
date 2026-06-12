@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { Product } from '../types';
-import { productCatalogById } from '../data/products';
+import { fetchProducts } from '../lib/products';
 
 export interface CartItemType {
   product: Product;
@@ -27,22 +27,7 @@ const hydrateCartItems = (): CartItemType[] => {
   }
 
   try {
-    const parsedItems = JSON.parse(saved) as CartItemType[];
-
-    return parsedItems
-      .map((item) => {
-        const currentProduct = productCatalogById[item.product.id];
-
-        if (!currentProduct) {
-          return null;
-        }
-
-        return {
-          ...item,
-          product: currentProduct,
-        };
-      })
-      .filter((item): item is CartItemType => Boolean(item));
+    return JSON.parse(saved) as CartItemType[];
   } catch {
     return [];
   }
@@ -50,6 +35,52 @@ const hydrateCartItems = (): CartItemType[] => {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItemType[]>(hydrateCartItems);
+
+  useEffect(() => {
+    const syncCartProducts = async () => {
+      if (items.length === 0) {
+        return;
+      }
+
+      try {
+        const currentProducts = await fetchProducts({
+          activeOnly: true,
+          ids: items.map((item) => item.product.id),
+        });
+
+        const productsById = Object.fromEntries(
+          currentProducts.map((product) => [product.id, product])
+        );
+
+        setItems((prevItems) => {
+          const nextItems = prevItems
+            .map((item) => {
+              const currentProduct = productsById[item.product.id];
+
+              if (!currentProduct) {
+                return null;
+              }
+
+              return {
+                ...item,
+                product: currentProduct,
+              };
+            })
+            .filter((item): item is CartItemType => Boolean(item));
+
+          const hasChanged =
+            nextItems.length !== prevItems.length ||
+            nextItems.some((item, index) => item.product !== prevItems[index]?.product);
+
+          return hasChanged ? nextItems : prevItems;
+        });
+      } catch (error) {
+        console.error('Failed to sync cart products:', error);
+      }
+    };
+
+    void syncCartProducts();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('mishfa_cart', JSON.stringify(items));
