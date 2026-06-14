@@ -1,4 +1,5 @@
 import type { Product } from '../types';
+import { productCatalog } from '../data/products';
 import { supabase } from './supabase';
 
 type ProductRow = Partial<Product> & {
@@ -51,6 +52,40 @@ type FetchProductsOptions = {
   ids?: string[];
 };
 
+function hasMissingColumnError(error: unknown) {
+  return Boolean(
+    error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      (error as { code?: string }).code === '42703'
+  );
+}
+
+function applyClientFilters(products: Product[], options: FetchProductsOptions) {
+  let filtered = products;
+
+  if (options.ids?.length) {
+    filtered = filtered.filter((product) => options.ids?.includes(product.id));
+  }
+
+  if (options.activeOnly) {
+    filtered = filtered.filter((product) => product.is_active !== false);
+  }
+
+  if (options.featuredOnly) {
+    const featuredProducts = filtered.filter((product) => product.is_featured);
+
+    if (featuredProducts.length > 0) {
+      return featuredProducts;
+    }
+
+    const fallbackFeaturedProducts = productCatalog.filter((product) => product.is_featured);
+    return fallbackFeaturedProducts.length > 0 ? fallbackFeaturedProducts : filtered.slice(0, 2);
+  }
+
+  return filtered;
+}
+
 export async function fetchProducts(options: FetchProductsOptions = {}) {
   let query = supabase.from('products').select('*').order('created_at', { ascending: false });
 
@@ -68,9 +103,29 @@ export async function fetchProducts(options: FetchProductsOptions = {}) {
 
   const { data, error } = await query;
 
-  if (error) {
+  if (!error) {
+    return applyClientFilters(((data ?? []) as ProductRow[]).map(normalizeProduct), options);
+  }
+
+  if (!hasMissingColumnError(error)) {
     throw error;
   }
 
-  return ((data ?? []) as ProductRow[]).map(normalizeProduct);
+  console.warn('Retrying product fetch without optional Supabase filters:', error);
+
+  let fallbackQuery = supabase.from('products').select('*').order('created_at', { ascending: false });
+
+  if (options.ids?.length) {
+    fallbackQuery = fallbackQuery.in('id', options.ids);
+  }
+
+  const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+
+  if (fallbackError) {
+    console.warn('Falling back to local product catalog:', fallbackError);
+    return applyClientFilters(productCatalog, options);
+  }
+
+  const normalizedFallbackProducts = ((fallbackData ?? []) as ProductRow[]).map(normalizeProduct);
+  return applyClientFilters(normalizedFallbackProducts, options);
 }
