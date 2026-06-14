@@ -1,6 +1,6 @@
 import type { Product } from '../types';
 
-const WHATSAPP_NUMBER = '919990507301';
+const WHATSAPP_NUMBER = '+917990507301';
 
 type OrderItem = {
   product: Product;

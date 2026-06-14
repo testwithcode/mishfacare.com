@@ -83,7 +83,7 @@ export default function Contact() {
                 icon: Phone,
                 title: 'Call Us',
                 content: '+91 79905 07301',
-                link: 'tel:+919990507301',
+                link: 'tel:+917990507301',
               },
               {
                 icon: Mail,
@@ -95,7 +95,7 @@ export default function Contact() {
                 icon: MessageSquare,
                 title: 'WhatsApp',
                 content: 'Chat with us',
-                link: 'https://wa.me/919990507301',
+                link: 'https://wa.me/+917990507301',
               },
             ].map((contact, idx) => (
               <a

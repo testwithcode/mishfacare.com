@@ -117,7 +117,7 @@ export default function OrderConfirmation() {
 
           <div className="flex flex-col sm:flex-row gap-4">
             <a
-              href="https://wa.me/919990507301"
+              href="https://wa.me/917990507301"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-all"

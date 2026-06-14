@@ -46,7 +46,7 @@ export default function ChatBot() {
     }
 
     if (lower.includes('order') || lower.includes('buy')) {
-      return "You can shop directly on our website and place your order through checkout, or use the WhatsApp order option for quick confirmation. For wholesale inquiries, please fill out our distributor form or WhatsApp us at +91 79905 07301.";
+      return "You can shop directly on our website and place your order through checkout, or use the WhatsApp order option for quick confirmation. For wholesale inquiries, please fill out our distributor form or WhatsApp us at + 79905 07301.";
     }
 
     if (lower.includes('distribution') || lower.includes('distributor')) {
@@ -58,10 +58,10 @@ export default function ChatBot() {
     }
 
     if (lower.includes('contact') || lower.includes('phone') || lower.includes('email')) {
-      return "You can reach us at:\n📞 +91 79905 07301\n📧 mishfacare@gmail.com\nAlso follow us on Instagram @mishfacare for updates!";
+      return "You can reach us at:\n📞 + 79905 07301\n📧 mishfacare@gmail.com\nAlso follow us on Instagram @mishfacare for updates!";
     }
 
-    return "Thank you for your question! For more detailed information, please contact us at mishfacare@gmail.com or WhatsApp +91 79905 07301. Our team will be happy to help!";
+    return "Thank you for your question! For more detailed information, please contact us at mishfacare@gmail.com or WhatsApp + 79905 07301. Our team will be happy to help!";
   };
 
   const handleSend = () => {
