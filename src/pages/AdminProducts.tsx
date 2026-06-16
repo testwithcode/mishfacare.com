@@ -413,6 +413,7 @@ export default function AdminProducts() {
         if (isMissingColumnError(updateError)) {
           setSupportsProductStatus(false);
           setStatusFilter('all');
+          setError('Product status is not enabled in Supabase yet. Run the is_active column migration, then refresh this page.');
           return;
         }
 
