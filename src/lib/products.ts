@@ -10,7 +10,7 @@ type ProductRow = Partial<Product> & {
   created_at?: string;
   features?: string[] | null;
   is_featured?: boolean | null;
-  is_active?: boolean | null;
+  is_active?: boolean | string | number | null;
   stock_count?: number | null;
   description?: string | null;
   image_url?: string | null;
@@ -18,6 +18,16 @@ type ProductRow = Partial<Product> & {
   cost_price?: number | null;
   sku?: string | null;
 };
+
+function normalizeBoolean(value: boolean | string | number | null | undefined, fallback = false) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value === 1;
+  if (typeof value === 'string') {
+    return ['true', '1', 'yes', 'active'].includes(value.trim().toLowerCase());
+  }
+
+  return fallback;
+}
 
 export const CATEGORY_LABELS: Record<Product['category'], string> = {
   sanitary_pads: 'Sanitary Pads',
@@ -37,8 +47,8 @@ export function normalizeProduct(row: ProductRow): Product {
       typeof row.original_price === 'number' ? row.original_price : undefined,
     image_url: row.image_url ?? '',
     features: Array.isArray(row.features) ? row.features.filter(Boolean) : [],
-    is_featured: Boolean(row.is_featured),
-    is_active: row.is_active ?? true,
+    is_featured: normalizeBoolean(row.is_featured),
+    is_active: normalizeBoolean(row.is_active, true),
     stock_count: Number(row.stock_count ?? 0),
     created_at: row.created_at ?? new Date().toISOString(),
     cost_price: typeof row.cost_price === 'number' ? row.cost_price : undefined,
@@ -69,7 +79,7 @@ function applyClientFilters(products: Product[], options: FetchProductsOptions) 
   }
 
   if (options.activeOnly) {
-    filtered = filtered.filter((product) => product.is_active !== false);
+    filtered = filtered.filter((product) => product.is_active === true);
   }
 
   if (options.featuredOnly) {

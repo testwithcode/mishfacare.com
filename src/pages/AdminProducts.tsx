@@ -282,15 +282,15 @@ export default function AdminProducts() {
       setSuccess('');
       setDeletingProductId(productToDelete.id);
 
-      const { error: deleteError, count } = await supabase
+      const { data: deletedProducts, error: deleteError } = await supabase
         .from('products')
         .delete()
         .eq('id', productToDelete.id)
-        .select('id', { count: 'exact', head: true });
+        .select('id');
 
       if (deleteError) throw deleteError;
 
-      if (count === 0) {
+      if (!deletedProducts || deletedProducts.length === 0) {
         throw new Error('Product was not found or could not be deleted.');
       }
 
