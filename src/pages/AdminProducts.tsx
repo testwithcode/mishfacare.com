@@ -1,9 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, CreditCard as Edit, Plus, X, AlertCircle, CheckCircle, Upload, RefreshCw } from 'lucide-react';
+import { RefreshCw, Trash2, CreditCard as Edit, Plus, X, AlertCircle, CheckCircle, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import type { Product } from '../types';
 import { CATEGORY_LABELS, normalizeProduct } from '../lib/products';
+import AdminLayout from '../components/AdminLayout';
+
+function getErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof Error) return err.message;
+
+  if (err && typeof err === 'object') {
+    const supabaseError = err as { message?: string; details?: string; hint?: string; code?: string };
+    return [supabaseError.message, supabaseError.details, supabaseError.hint, supabaseError.code]
+      .filter(Boolean)
+      .join(' ') || fallback;
+  }
+
+  return fallback;
+}
+
+function isMissingColumnError(err: unknown) {
+  return Boolean(
+    err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      ((err as { code?: string }).code === '42703' || (err as { code?: string }).code === 'PGRST204')
+  );
+}
 
 interface Coupon {
   id: string;
@@ -28,9 +51,13 @@ export default function AdminProducts() {
   const [productSearch, setProductSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [categoryFilter, setCategoryFilter] = useState<'all' | Product['category']>('all');
+  const [supportsProductStatus, setSupportsProductStatus] = useState(true);
 
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productPendingDelete, setProductPendingDelete] = useState<Product | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [updatingProductStatusId, setUpdatingProductStatusId] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -109,7 +136,7 @@ export default function AdminProducts() {
       setProducts(((data ?? []) as Product[]).map(normalizeProduct));
       setError('');
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to load products';
+      const errorMsg = getErrorMessage(err, 'Failed to load products');
       setError(errorMsg);
       console.error('Error fetching products:', err);
     }
@@ -189,21 +216,43 @@ export default function AdminProducts() {
         sku: formData.sku || '',
         stock_count: parseInt(formData.stock_count?.toString() || '0'),
         image_url: imageUrl || '',
-        is_active: formData.is_active ?? true,
       };
 
+      const productPayload = supportsProductStatus
+        ? { ...productData, is_active: formData.is_active ?? true }
+        : productData;
+
       if (editingProduct) {
-        const { error: updateError } = await supabase
+        let { error: updateError } = await supabase
           .from('products')
-          .update(productData)
+          .update(productPayload)
           .eq('id', editingProduct.id);
+
+        if (updateError && supportsProductStatus && isMissingColumnError(updateError)) {
+          setSupportsProductStatus(false);
+          setStatusFilter('all');
+          const retryResult = await supabase
+            .from('products')
+            .update(productData)
+            .eq('id', editingProduct.id);
+          updateError = retryResult.error;
+        }
 
         if (updateError) throw updateError;
         setSuccess('Product updated successfully!');
       } else {
-        const { error: insertError } = await supabase
+        let { error: insertError } = await supabase
           .from('products')
-          .insert([productData]);
+          .insert([productPayload]);
+
+        if (insertError && supportsProductStatus && isMissingColumnError(insertError)) {
+          setSupportsProductStatus(false);
+          setStatusFilter('all');
+          const retryResult = await supabase
+            .from('products')
+            .insert([productData]);
+          insertError = retryResult.error;
+        }
 
         if (insertError) throw insertError;
         setSuccess('Product added successfully!');
@@ -217,30 +266,46 @@ export default function AdminProducts() {
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to save product';
+      const errorMsg = getErrorMessage(err, 'Failed to save product');
       setError(errorMsg);
       console.error('Error saving product:', err);
     }
   };
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+  const handleDeleteProduct = async () => {
+    if (!productPendingDelete) return;
+
+    const productToDelete = productPendingDelete;
 
     try {
       setError('');
-      const { error: deleteError } = await supabase
+      setSuccess('');
+      setDeletingProductId(productToDelete.id);
+
+      const { error: deleteError, count } = await supabase
         .from('products')
         .delete()
-        .eq('id', productId);
+        .eq('id', productToDelete.id)
+        .select('id', { count: 'exact', head: true });
 
       if (deleteError) throw deleteError;
+
+      if (count === 0) {
+        throw new Error('Product was not found or could not be deleted.');
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.filter((product) => product.id !== productToDelete.id)
+      );
+      setProductPendingDelete(null);
       setSuccess('Product deleted successfully!');
-      fetchProducts();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to delete product';
+      const errorMsg = getErrorMessage(err, 'Failed to delete product');
       setError(errorMsg);
       console.error('Error deleting product:', err);
+    } finally {
+      setDeletingProductId(null);
     }
   };
 
@@ -255,16 +320,22 @@ export default function AdminProducts() {
         return;
       }
 
-      const { error: insertError } = await supabase.from('coupons').insert([
-        {
-          code: couponData.code.toUpperCase(),
-          discount_type: couponData.discount_type,
-          discount_value: parseFloat(couponData.discount_value.toString()),
-          min_order_amount: parseFloat(couponData.min_order_amount.toString()),
-          valid_until: couponData.valid_until || null,
-          is_active: true,
-        },
+      const couponPayload = {
+        code: couponData.code.toUpperCase(),
+        discount_type: couponData.discount_type,
+        discount_value: parseFloat(couponData.discount_value.toString()),
+        min_order_amount: parseFloat(couponData.min_order_amount.toString()),
+        valid_until: couponData.valid_until || null,
+      };
+
+      let { error: insertError } = await supabase.from('coupons').insert([
+        { ...couponPayload, is_active: true },
       ]);
+
+      if (insertError && isMissingColumnError(insertError)) {
+        const retryResult = await supabase.from('coupons').insert([couponPayload]);
+        insertError = retryResult.error;
+      }
 
       if (insertError) throw insertError;
       setSuccess('Coupon added successfully!');
@@ -279,7 +350,7 @@ export default function AdminProducts() {
       fetchCoupons();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to save coupon';
+      const errorMsg = getErrorMessage(err, 'Failed to save coupon');
       setError(errorMsg);
       console.error('Error saving coupon:', err);
     }
@@ -300,7 +371,7 @@ export default function AdminProducts() {
       fetchCoupons();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to delete coupon';
+      const errorMsg = getErrorMessage(err, 'Failed to delete coupon');
       setError(errorMsg);
       console.error('Error deleting coupon:', err);
     }
@@ -324,24 +395,45 @@ export default function AdminProducts() {
   };
 
   const handleToggleProductStatus = async (product: Product) => {
+    const nextStatus = !product.is_active;
+
     try {
       setError('');
       setSuccess('');
+      setUpdatingProductStatusId(product.id);
 
-      const { error: updateError } = await supabase
+      const { data: updatedProduct, error: updateError } = await supabase
         .from('products')
-        .update({ is_active: !product.is_active })
-        .eq('id', product.id);
+        .update({ is_active: nextStatus })
+        .eq('id', product.id)
+        .select('*')
+        .single();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        if (isMissingColumnError(updateError)) {
+          setSupportsProductStatus(false);
+          setStatusFilter('all');
+          return;
+        }
 
-      setSuccess(`Product marked as ${product.is_active ? 'inactive' : 'active'}.`);
-      await fetchProducts();
+        throw updateError;
+      }
+
+      setProducts((currentProducts) =>
+        currentProducts.map((currentProduct) =>
+          currentProduct.id === product.id
+            ? normalizeProduct((updatedProduct ?? { ...currentProduct, is_active: nextStatus }) as Product)
+            : currentProduct
+        )
+      );
+      setSuccess(`Product marked as ${nextStatus ? 'active' : 'inactive'}.`);
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to update product status';
+      const errorMsg = getErrorMessage(err, 'Failed to update product status');
       setError(errorMsg);
       console.error('Error updating product status:', err);
+    } finally {
+      setUpdatingProductStatusId(null);
     }
   };
 
@@ -351,6 +443,7 @@ export default function AdminProducts() {
       product.sku?.toLowerCase().includes(productSearch.toLowerCase()) ||
       product.description.toLowerCase().includes(productSearch.toLowerCase());
     const matchesStatus =
+      !supportsProductStatus ||
       statusFilter === 'all' ||
       (statusFilter === 'active' ? product.is_active : !product.is_active);
     const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter;
@@ -359,24 +452,13 @@ export default function AdminProducts() {
   });
 
   return (
-    <div className="min-h-screen bg-black pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <AdminLayout
+      title="Product & Coupon Management"
+      description="Manage all your products and promotional codes"
+      onRefresh={fetchAllData}
+      refreshing={loading}
+    >
         {/* Header */}
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-4xl font-bold text-white">Product & Coupon Management</h1>
-            <p className="text-gray-400 mt-2">Manage all your products and promotional codes</p>
-          </div>
-          <button
-            onClick={fetchAllData}
-            className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg transition-all"
-            disabled={loading}
-          >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
-
         {/* Alerts */}
         {error && (
           <div className="mb-6 bg-red-900 bg-opacity-30 border border-red-500 rounded-lg p-4 flex items-start gap-3">
@@ -440,7 +522,7 @@ export default function AdminProducts() {
               Add New Product
             </button>
 
-            <div className="mb-8 grid gap-4 rounded-xl border border-amber-600 bg-gray-900 p-4 lg:grid-cols-[minmax(0,1fr)_180px_220px]">
+            <div className={`mb-8 grid gap-4 rounded-xl border border-amber-600 bg-gray-900 p-4 ${supportsProductStatus ? 'lg:grid-cols-[minmax(0,1fr)_180px_220px]' : 'lg:grid-cols-[minmax(0,1fr)_220px]'}`}>
               <input
                 type="text"
                 value={productSearch}
@@ -448,15 +530,17 @@ export default function AdminProducts() {
                 placeholder="Search by name, SKU, or description"
                 className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="all">All statuses</option>
-                <option value="active">Active only</option>
-                <option value="inactive">Inactive only</option>
-              </select>
+              {supportsProductStatus && (
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+                  className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="active">Active only</option>
+                  <option value="inactive">Inactive only</option>
+                </select>
+              )}
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
@@ -469,7 +553,7 @@ export default function AdminProducts() {
                   </option>
                 ))}
               </select>
-              <div className="text-sm text-gray-400 lg:col-span-3">
+              <div className={`text-sm text-gray-400 ${supportsProductStatus ? 'lg:col-span-3' : 'lg:col-span-2'}`}>
                 Showing {filteredProducts.length} of {products.length} products
               </div>
             </div>
@@ -507,7 +591,7 @@ export default function AdminProducts() {
                     </div>
 
                     {/* Category and Price Row */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <label className="block text-white font-semibold mb-2">
                           Category *
@@ -548,7 +632,7 @@ export default function AdminProducts() {
                     </div>
 
                     {/* Cost Price and SKU Row */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <label className="block text-white font-semibold mb-2">
                           Cost Price (₹)
@@ -579,7 +663,7 @@ export default function AdminProducts() {
                     </div>
 
                     {/* Stock Count */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <label className="block text-white font-semibold mb-2">
                           Stock Count
@@ -594,7 +678,7 @@ export default function AdminProducts() {
                         />
                       </div>
 
-                      <div>
+                      {supportsProductStatus && <div>
                         <label className="block text-white font-semibold mb-2">
                           Product Status
                         </label>
@@ -611,7 +695,7 @@ export default function AdminProducts() {
                           <option value="active">Active</option>
                           <option value="inactive">Inactive</option>
                         </select>
-                      </div>
+                      </div>}
                     </div>
 
                     {/* Description */}
@@ -660,7 +744,7 @@ export default function AdminProducts() {
                     </div>
 
                     {/* Form Actions */}
-                    <div className="flex gap-4 pt-6 border-t border-amber-600">
+                    <div className="flex flex-col gap-4 border-t border-amber-600 pt-6 sm:flex-row">
                       <button
                         type="submit"
                         disabled={uploading}
@@ -677,6 +761,52 @@ export default function AdminProducts() {
                       </button>
                     </div>
                   </form>
+                </div>
+              </div>
+            )}
+
+            {productPendingDelete && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4">
+                <div className="w-full max-w-md rounded-lg border border-red-600 bg-gray-900 p-6 shadow-xl">
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">Delete product?</h2>
+                      <p className="mt-2 text-gray-400">
+                        This will permanently delete{' '}
+                        <span className="font-semibold text-white">{productPendingDelete.name}</span>.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setProductPendingDelete(null)}
+                      disabled={deletingProductId === productPendingDelete.id}
+                      className="text-gray-400 transition-colors hover:text-white disabled:opacity-50"
+                      aria-label="Close delete confirmation"
+                    >
+                      <X className="h-6 w-6" />
+                    </button>
+                  </div>
+
+                  <div className="rounded-lg border border-red-700 bg-red-950/30 p-4 text-sm text-red-200">
+                    Delete cannot be undone. If this product is referenced by existing orders, Supabase may block deletion.
+                  </div>
+
+                  <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={() => setProductPendingDelete(null)}
+                      disabled={deletingProductId === productPendingDelete.id}
+                      className="flex-1 rounded-lg bg-gray-700 px-6 py-3 font-semibold text-white transition-all hover:bg-gray-600 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeleteProduct}
+                      disabled={deletingProductId === productPendingDelete.id}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-6 py-3 font-semibold text-white transition-all hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                      {deletingProductId === productPendingDelete.id ? 'Deleting...' : 'Delete Product'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -699,13 +829,15 @@ export default function AdminProducts() {
                   <div className="p-4">
                     <div className="mb-3 flex items-start justify-between gap-3">
                       <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">{product.name}</h3>
-                      <span
-                        className={`inline-block whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold ${
-                          product.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
-                        }`}
-                      >
-                        {product.is_active ? 'Active' : 'Inactive'}
-                      </span>
+                      {supportsProductStatus && (
+                        <span
+                          className={`inline-block whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold ${
+                            product.is_active ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+                          }`}
+                        >
+                          {product.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      )}
                     </div>
 
                     <div className="space-y-2 mb-4 text-sm">
@@ -741,7 +873,7 @@ export default function AdminProducts() {
                       <p className="text-gray-400 text-xs mb-4 line-clamp-2">{product.description}</p>
                     )}
 
-                    <div className="grid gap-2 sm:grid-cols-3">
+                    <div className={`grid gap-2 ${supportsProductStatus ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
                       <button
                         onClick={() => handleEditProduct(product)}
                         className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded transition-all text-sm font-semibold"
@@ -749,18 +881,25 @@ export default function AdminProducts() {
                         <Edit className="w-4 h-4" />
                         Edit
                       </button>
+                      {supportsProductStatus && (
+                        <button
+                          onClick={() => handleToggleProductStatus(product)}
+                          disabled={updatingProductStatusId === product.id}
+                          className={`inline-flex items-center justify-center px-3 py-2 rounded transition-all text-sm font-semibold text-white ${
+                            product.is_active
+                              ? 'bg-gray-700 hover:bg-gray-600'
+                              : 'bg-green-600 hover:bg-green-700'
+                          } disabled:cursor-not-allowed disabled:opacity-60`}
+                        >
+                          {updatingProductStatusId === product.id
+                            ? 'Saving...'
+                            : product.is_active
+                              ? 'Deactivate'
+                              : 'Activate'}
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleToggleProductStatus(product)}
-                        className={`inline-flex items-center justify-center px-3 py-2 rounded transition-all text-sm font-semibold text-white ${
-                          product.is_active
-                            ? 'bg-gray-700 hover:bg-gray-600'
-                            : 'bg-green-600 hover:bg-green-700'
-                        }`}
-                      >
-                        {product.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProduct(product.id)}
+                        onClick={() => setProductPendingDelete(product)}
                         className="inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded transition-all text-sm font-semibold"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1002,7 +1141,6 @@ export default function AdminProducts() {
             )}
           </div>
         )}
-      </div>
-    </div>
+    </AdminLayout>
   );
 }

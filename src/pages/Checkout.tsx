@@ -7,6 +7,15 @@ import { supabase } from '../lib/supabase';
 import { buildWhatsAppOrderMessage, getWhatsAppUrl } from '../lib/whatsapp';
 import WhatsAppIcon from '../components/WhatsAppIcon';
 
+function isSchemaCacheColumnError(err: unknown) {
+  return Boolean(
+    err &&
+      typeof err === 'object' &&
+      'code' in err &&
+      ((err as { code?: string }).code === 'PGRST204' || (err as { code?: string }).code === '42703')
+  );
+}
+
 export default function Checkout() {
   const navigate = useNavigate();
   const { items, total, clearCart } = useCart();
@@ -86,24 +95,42 @@ export default function Checkout() {
         .eq('is_active', true)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
+      if (fetchError && !isSchemaCacheColumnError(fetchError)) throw fetchError;
 
-      if (!data) {
+      let coupon = data;
+
+      if (fetchError && isSchemaCacheColumnError(fetchError)) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('coupons')
+          .select('*')
+          .eq('code', couponCode.toUpperCase())
+          .maybeSingle();
+
+        if (fallbackError) throw fallbackError;
+        coupon = fallbackData;
+      }
+
+      if (!coupon) {
         setCouponError('Invalid coupon code');
         return;
       }
 
-      if (data.valid_until && new Date(data.valid_until) < new Date()) {
+      if ('is_active' in coupon && coupon.is_active === false) {
+        setCouponError('Coupon is inactive');
+        return;
+      }
+
+      if (coupon.valid_until && new Date(coupon.valid_until) < new Date()) {
         setCouponError('Coupon has expired');
         return;
       }
 
-      if (data.min_order_amount && total < data.min_order_amount) {
-        setCouponError(`Minimum order amount is ₹${data.min_order_amount}`);
+      if (coupon.min_order_amount && total < coupon.min_order_amount) {
+        setCouponError(`Minimum order amount is ₹${coupon.min_order_amount}`);
         return;
       }
 
-      setAppliedCoupon(data);
+      setAppliedCoupon(coupon);
       setCouponCode('');
     } catch (err) {
       setCouponError(err instanceof Error ? err.message : 'Failed to apply coupon');
@@ -133,7 +160,7 @@ export default function Checkout() {
 
       const sessionId = Math.random().toString(36).substring(2, 15);
 
-      const orderData = {
+      const baseOrderData = {
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
         customer_phone: formData.customer_phone,
@@ -144,15 +171,39 @@ export default function Checkout() {
           quantity: item.quantity,
         })),
         total_amount: finalTotal,
+        status: 'confirmed',
+      };
+
+      const orderData = {
+        ...baseOrderData,
         discount_amount: discountAmount,
         applied_coupon: appliedCoupon?.code || null,
-        status: 'confirmed',
         customer_session_id: sessionId,
       };
 
       const { error: insertError } = await supabase.from('orders').insert([orderData]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        if (!isSchemaCacheColumnError(insertError)) throw insertError;
+
+        const fallbackOrderData = {
+          ...baseOrderData,
+          items: [
+            ...baseOrderData.items,
+            {
+              type: 'order_metadata',
+              customer_session_id: sessionId,
+              discount_amount: discountAmount,
+              applied_coupon: appliedCoupon?.code || null,
+              subtotal: total,
+              tax,
+            },
+          ],
+        };
+
+        const { error: fallbackInsertError } = await supabase.from('orders').insert([fallbackOrderData]);
+        if (fallbackInsertError) throw fallbackInsertError;
+      }
 
       setSuccess(true);
       clearCart();

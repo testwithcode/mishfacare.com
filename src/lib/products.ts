@@ -57,7 +57,7 @@ function hasMissingColumnError(error: unknown) {
     error &&
       typeof error === 'object' &&
       'code' in error &&
-      (error as { code?: string }).code === '42703'
+      ((error as { code?: string }).code === '42703' || (error as { code?: string }).code === 'PGRST204')
   );
 }
 

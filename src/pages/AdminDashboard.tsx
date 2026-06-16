@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { LogOut, ShoppingCart, Users, DollarSign, BarChart3, Settings, TrendingUp, RefreshCw } from 'lucide-react';
+import { ShoppingCart, Users, DollarSign, BarChart3, TrendingUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import AdminLayout from '../components/AdminLayout';
 
 interface Order {
   id: string;
@@ -219,12 +220,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('mishfa_admin_token');
-    localStorage.removeItem('mishfa_admin_email');
-    navigate('/admin/login');
-  };
-
   const StatCard = ({ icon: Icon, label, value, color = 'amber' }: StatCardProps) => (
     <div className="bg-gray-900 border border-amber-600 rounded-lg p-6 hover:border-amber-500 transition-all">
       <div className="flex items-center justify-between">
@@ -253,79 +248,34 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black pt-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-gray-900 to-black border-b border-amber-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
-            <p className="text-gray-400 mt-2">Manage orders, products, distributors & inquiries</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid gap-12 xl:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="space-y-6">
-            <div className="rounded-xl border border-amber-600 bg-gray-900 p-4">
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-gray-400">
-                Admin Navigation
-              </p>
-              <div className="space-y-2">
-                {adminSections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveTab(section.id)}
-                    className={`flex w-full items-center justify-between rounded-lg px-4 py-3 text-left transition-all ${
-                      activeTab === section.id
-                        ? 'bg-amber-600 text-white'
-                        : 'bg-black text-gray-300 hover:bg-gray-800'
-                    }`}
-                  >
-                    <span className="flex items-center gap-3 font-semibold">
-                      <section.icon className="h-5 w-5" />
-                      {section.label}
-                    </span>
-                    <span className="rounded-full bg-black/30 px-2.5 py-1 text-xs font-bold text-inherit">
-                      {section.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
+    <AdminLayout
+      title="Admin Dashboard"
+      description="Manage orders, products, distributors & inquiries"
+      onRefresh={fetchAllData}
+      refreshing={loading}
+    >
+            <div className="mb-8 grid gap-3 sm:grid-cols-3">
+              {adminSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveTab(section.id)}
+                  className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left transition-all ${
+                    activeTab === section.id
+                      ? 'border-amber-500 bg-amber-600 text-white'
+                      : 'border-amber-600 bg-gray-900 text-gray-300 hover:bg-gray-800'
+                  }`}
+                >
+                  <span className="flex items-center gap-3 font-semibold">
+                    <section.icon className="h-5 w-5" />
+                    {section.label}
+                  </span>
+                  <span className="rounded-full bg-black/30 px-2.5 py-1 text-xs font-bold text-inherit">
+                    {section.count}
+                  </span>
+                </button>
+              ))}
             </div>
 
-            <div className="rounded-xl border border-amber-600 bg-gray-900 p-4">
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-gray-400">
-                Quick Actions
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={fetchAllData}
-                  disabled={loading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition-all disabled:opacity-50 hover:bg-amber-700"
-                >
-                  <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </button>
-                <Link
-                  to="/admin/products"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition-all hover:bg-blue-700"
-                >
-                  <Settings className="w-5 h-5" />
-                  Manage Products
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 font-semibold text-white transition-all hover:bg-red-700"
-                >
-                  <LogOut className="w-5 h-5" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          </aside>
-
-          <div>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4 mb-12">
               <StatCard icon={ShoppingCart} label="Total Orders" value={stats.totalOrders} color="amber" />
               <StatCard icon={DollarSign} label="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} color="green" />
@@ -473,9 +423,6 @@ export default function AdminDashboard() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </AdminLayout>
   );
 }
