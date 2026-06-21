@@ -208,11 +208,13 @@ export default function Home() {
                       <div>
                         <div className="flex items-center gap-3">
                           <span className="text-2xl font-bold text-amber-400">₹{product.price}/- INR</span>
-                          {product.original_price && (
+                          {product.original_price && product.original_price > product.price && (
                             <span className="text-sm text-gray-500 line-through">₹{product.original_price}</span>
                           )}
                         </div>
-                        <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Discount Price</p>
+                        {product.original_price && product.original_price > product.price && (
+                          <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Sale Price</p>
+                        )}
                       </div>
                       <Link
                         to="/products"
@@ -269,10 +271,10 @@ export default function Home() {
                 ))}
               </ul>
               <Link
-                to="/women-care"
+                to="/products"
                 className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg font-semibold transition-all"
               >
-                Explore Women Care <ArrowRight className="w-5 h-5" />
+                Shop Women Care <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
             <div className="relative animate-slideInRight">
@@ -317,10 +319,10 @@ export default function Home() {
                 ))}
               </ul>
               <Link
-                to="/baby-care"
+                to="/products"
                 className="inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-8 py-4 rounded-lg font-semibold transition-all"
               >
-                Explore Baby Care <ArrowRight className="w-5 h-5" />
+                Shop Baby Care <ArrowRight className="w-5 h-5" />
               </Link>
             </div>
           </div>

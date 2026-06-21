@@ -91,10 +91,12 @@ export default function Cart() {
                   <p className="text-gray-400 text-sm mb-4">{item.product.description}</p>
                   <div className="flex items-center gap-3 flex-wrap">
                     <p className="text-2xl font-bold text-amber-400">₹{item.product.price}/- INR</p>
-                    {item.product.original_price && (
+                    {item.product.original_price && item.product.original_price > item.product.price && (
                       <span className="text-sm text-gray-500 line-through">₹{item.product.original_price}</span>
                     )}
-                    <span className="text-xs uppercase tracking-[0.24em] text-green-400">Discount Price</span>
+                    {item.product.original_price && item.product.original_price > item.product.price && (
+                      <span className="text-xs uppercase tracking-[0.24em] text-green-400">Sale Price</span>
+                    )}
                   </div>
                 </div>
 

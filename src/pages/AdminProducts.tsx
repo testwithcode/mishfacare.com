@@ -66,6 +66,7 @@ export default function AdminProducts() {
     name: '',
     category: 'sanitary_pads',
     price: 0,
+    original_price: undefined,
     cost_price: 0,
     description: '',
     sku: '',
@@ -194,8 +195,33 @@ export default function AdminProducts() {
     setSuccess('');
 
     try {
+      const price = Number(formData.price);
+      const originalPrice =
+        formData.original_price === undefined || formData.original_price === null
+          ? undefined
+          : Number(formData.original_price);
+      const costPrice =
+        formData.cost_price === undefined || formData.cost_price === null
+          ? undefined
+          : Number(formData.cost_price);
+
       if (!formData.name || formData.price === undefined || !formData.category) {
         setError('Please fill in all required fields (Name, Price, Category)');
+        return;
+      }
+
+      if (!Number.isFinite(price) || price < 0) {
+        setError('Please enter a valid selling price.');
+        return;
+      }
+
+      if (originalPrice !== undefined && (!Number.isFinite(originalPrice) || originalPrice < 0)) {
+        setError('Please enter a valid original price or leave it empty.');
+        return;
+      }
+
+      if (costPrice !== undefined && (!Number.isFinite(costPrice) || costPrice < 0)) {
+        setError('Please enter a valid cost price or leave it empty.');
         return;
       }
 
@@ -210,8 +236,9 @@ export default function AdminProducts() {
       const productData = {
         name: formData.name,
         category: formData.category,
-        price: parseFloat(formData.price.toString()),
-        cost_price: formData.cost_price ? parseFloat(formData.cost_price.toString()) : null,
+        price,
+        original_price: originalPrice ?? null,
+        cost_price: costPrice ?? null,
         description: formData.description || '',
         sku: formData.sku || '',
         stock_count: parseInt(formData.stock_count?.toString() || '0'),
@@ -621,8 +648,13 @@ export default function AdminProducts() {
                         </label>
                         <input
                           type="number"
-                          value={formData.price || ''}
-                          onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                          value={formData.price ?? ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              price: e.target.value === '' ? undefined : Number(e.target.value),
+                            })
+                          }
                           placeholder="0"
                           step="0.01"
                           min="0"
@@ -632,23 +664,52 @@ export default function AdminProducts() {
                       </div>
                     </div>
 
-                    {/* Cost Price and SKU Row */}
+                    {/* Original Price and Cost Price Row */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <label className="block text-white font-semibold mb-2">
-                          Cost Price (₹)
+                          Original Price / MRP (₹)
                         </label>
                         <input
                           type="number"
-                          value={formData.cost_price || ''}
-                          onChange={(e) => setFormData({ ...formData, cost_price: parseFloat(e.target.value) || 0 })}
-                          placeholder="0"
+                          value={formData.original_price ?? ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              original_price: e.target.value === '' ? undefined : Number(e.target.value),
+                            })
+                          }
+                          placeholder="Optional"
                           step="0.01"
                           min="0"
                           className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                         />
                       </div>
 
+                      <div>
+                        <label className="block text-white font-semibold mb-2">
+                          Cost Price (₹)
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.cost_price ?? ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              cost_price: e.target.value === '' ? undefined : Number(e.target.value),
+                            })
+                          }
+                          placeholder="Optional"
+                          step="0.01"
+                          min="0"
+                          className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        />
+                      </div>
+
+                    </div>
+
+                    {/* SKU and Stock Count */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <label className="block text-white font-semibold mb-2">
                           SKU
@@ -661,10 +722,6 @@ export default function AdminProducts() {
                           className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                         />
                       </div>
-                    </div>
-
-                    {/* Stock Count */}
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <label className="block text-white font-semibold mb-2">
                           Stock Count
@@ -678,6 +735,11 @@ export default function AdminProducts() {
                           className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
                         />
                       </div>
+
+                    </div>
+
+                    {/* Product Status */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
                       {supportsProductStatus && <div>
                         <label className="block text-white font-semibold mb-2">
@@ -847,9 +909,15 @@ export default function AdminProducts() {
                         <span className="text-white font-semibold">{CATEGORY_LABELS[product.category]}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Price:</span>
+                        <span className="text-gray-400">Selling Price:</span>
                         <span className="text-amber-400 font-bold">₹{product.price.toFixed(2)}</span>
                       </div>
+                      {product.original_price && product.original_price > product.price && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Original/MRP:</span>
+                          <span className="text-gray-300 line-through">₹{product.original_price.toFixed(2)}</span>
+                        </div>
+                      )}
                       {product.cost_price && (
                         <div className="flex justify-between">
                           <span className="text-gray-400">Cost:</span>

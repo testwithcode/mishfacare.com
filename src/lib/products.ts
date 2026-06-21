@@ -29,6 +29,12 @@ function normalizeBoolean(value: boolean | string | number | null | undefined, f
   return fallback;
 }
 
+function normalizeOptionalNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === '') return undefined;
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : undefined;
+}
+
 export const CATEGORY_LABELS: Record<Product['category'], string> = {
   sanitary_pads: 'Sanitary Pads',
   baby_diapers: 'Baby Diapers',
@@ -43,15 +49,14 @@ export function normalizeProduct(row: ProductRow): Product {
     name: row.name,
     description: row.description ?? '',
     price: Number(row.price ?? 0),
-    original_price:
-      typeof row.original_price === 'number' ? row.original_price : undefined,
+    original_price: normalizeOptionalNumber(row.original_price),
     image_url: row.image_url ?? '',
     features: Array.isArray(row.features) ? row.features.filter(Boolean) : [],
     is_featured: normalizeBoolean(row.is_featured),
     is_active: normalizeBoolean(row.is_active, true),
     stock_count: Number(row.stock_count ?? 0),
     created_at: row.created_at ?? new Date().toISOString(),
-    cost_price: typeof row.cost_price === 'number' ? row.cost_price : undefined,
+    cost_price: normalizeOptionalNumber(row.cost_price),
     sku: row.sku ?? undefined,
   };
 }

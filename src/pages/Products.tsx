@@ -8,6 +8,7 @@ import { CATEGORY_LABELS, fetchProducts } from '../lib/products';
 
 export default function Products() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const { addItem } = useCart();
   const [addedProducts, setAddedProducts] = useState<{ [key: string]: boolean }>({});
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,9 +35,17 @@ export default function Products() {
 
   const categories = Array.from(new Set(products.map((product) => product.category)));
 
-  const filteredProducts = selectedCategory
-    ? products.filter((product) => product.category === selectedCategory)
-    : products;
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = !selectedCategory || product.category === selectedCategory;
+    const matchesSearch =
+      normalizedSearchTerm.length === 0 ||
+      product.name.toLowerCase().includes(normalizedSearchTerm) ||
+      product.description.toLowerCase().includes(normalizedSearchTerm) ||
+      product.sku?.toLowerCase().includes(normalizedSearchTerm);
+
+    return matchesCategory && matchesSearch;
+  });
 
   const handleAddToCart = (product: Product) => {
     addItem(product, 1);
@@ -62,37 +71,65 @@ export default function Products() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.45 }}
         >
-          <h1 className="text-5xl font-bold text-white mb-4">Our Products</h1>
+          <h1 className="text-5xl font-bold text-white mb-4">Shop All Products</h1>
           <p className="text-xl text-gray-300">
-            Premium sanitary pads curated for everyday comfort and freshness
+            Search and filter every live Mishfa Care product in one place
           </p>
         </motion.div>
 
         {/* Filters */}
-        <div className="mb-12 flex flex-wrap gap-4">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-              selectedCategory === null
-                ? 'bg-amber-600 text-white'
-                : 'bg-gray-900 text-gray-300 border border-amber-600 hover:border-amber-400'
-            }`}
-          >
-            All Products
-          </button>
-          {categories.map((cat) => (
+        <div className="mb-12 rounded-xl border border-amber-600 bg-gray-900 p-4 sm:p-6">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px]">
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by product name, description, or SKU"
+              className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <select
+              value={selectedCategory ?? 'all'}
+              onChange={(e) => setSelectedCategory(e.target.value === 'all' ? null : e.target.value)}
+              className="w-full rounded-lg border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="all">All categories</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {CATEGORY_LABELS[cat]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
             <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                selectedCategory === cat
+              onClick={() => setSelectedCategory(null)}
+              className={`px-5 py-2 rounded-lg font-semibold transition-all ${
+                selectedCategory === null
                   ? 'bg-amber-600 text-white'
-                  : 'bg-gray-900 text-gray-300 border border-amber-600 hover:border-amber-400'
+                  : 'bg-black text-gray-300 border border-amber-600 hover:border-amber-400'
               }`}
             >
-              {CATEGORY_LABELS[cat]}
+              All Products
             </button>
-          ))}
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-5 py-2 rounded-lg font-semibold transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-black text-gray-300 border border-amber-600 hover:border-amber-400'
+                }`}
+              >
+                {CATEGORY_LABELS[cat]}
+              </button>
+            ))}
+          </div>
+          {!loading && !error && (
+            <p className="mt-4 text-sm text-gray-400">
+              Showing {filteredProducts.length} of {products.length} active products
+            </p>
+          )}
         </div>
 
         {/* Products Grid */}
@@ -106,7 +143,7 @@ export default function Products() {
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="rounded-xl border border-amber-600 bg-gray-900 px-6 py-12 text-center text-gray-300">
-            No products match the selected filter.
+            No active products match your search or selected filter.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -162,11 +199,13 @@ export default function Products() {
                     <div>
                       <div className="flex items-center gap-3">
                         <span className="text-2xl font-bold text-amber-400">₹{product.price}/- INR</span>
-                        {product.original_price && (
+                        {product.original_price && product.original_price > product.price && (
                           <span className="text-sm text-gray-500 line-through">₹{product.original_price}</span>
                         )}
                       </div>
-                      <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Discount Price</p>
+                      {product.original_price && product.original_price > product.price && (
+                        <p className="text-xs uppercase tracking-[0.24em] text-green-400 mt-1">Sale Price</p>
+                      )}
                     </div>
                     <button
                       onClick={() => handleAddToCart(product)}
