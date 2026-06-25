@@ -5,14 +5,14 @@ export default function WomenCare() {
   return (
     <div className="bg-black">
       {/* Hero */}
-      <section className="min-h-screen flex items-center justify-center pt-20 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20 animate-pulse">
-          <div className="absolute top-20 right-10 w-96 h-96 bg-amber-600 rounded-full blur-3xl opacity-20"></div>
+      <section className="page-hero relative flex items-center justify-center overflow-hidden pb-12">
+        <div className="pointer-events-none absolute inset-0 opacity-20 animate-pulse">
+          <div className="absolute right-0 top-20 h-56 w-56 rounded-full bg-amber-600 opacity-20 blur-3xl sm:right-10 sm:h-96 sm:w-96"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
+        <div className="site-container relative z-10 grid grid-cols-1 items-center gap-8 md:grid-cols-2 lg:gap-12">
           <div className="animate-slideInLeft">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="heading-hero mb-6 font-bold leading-tight text-white">
               Women Care Excellence
             </h1>
             <p className="text-xl text-gray-300 mb-8 leading-relaxed">
@@ -20,7 +20,7 @@ export default function WomenCare() {
             </p>
             <Link
               to="/products"
-              className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-8 py-4 rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg"
+              className="focus-ring touch-button gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-4 font-semibold text-white shadow-lg transition-all hover:from-amber-600 hover:to-amber-700 motion-safe:hover:scale-105"
             >
               Shop Now <ArrowRight className="w-5 h-5" />
             </Link>
@@ -30,20 +30,20 @@ export default function WomenCare() {
             <img
               src="/WhatsApp_Image_2026-05-17_at_1.17.15_PM.jpeg"
               alt="Women Care"
-              className="rounded-2xl shadow-2xl border border-amber-600"
+              className="w-full rounded-2xl border border-amber-600 object-cover shadow-2xl"
             />
           </div>
         </div>
       </section>
 
       {/* Benefits */}
-      <section className="py-20 border-t border-amber-600 relative">
-        <div className="absolute inset-0 opacity-10 animate-pulse">
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-600 rounded-full blur-3xl opacity-10"></div>
+      <section className="section-y relative border-t border-amber-600">
+        <div className="pointer-events-none absolute inset-0 opacity-10 animate-pulse">
+          <div className="absolute bottom-0 left-0 h-56 w-56 rounded-full bg-amber-600 opacity-10 blur-3xl sm:h-96 sm:w-96"></div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <h2 className="text-4xl font-bold text-center text-white mb-12">Why Women Love Mishfa Care</h2>
+        <div className="site-container relative z-10">
+          <h2 className="heading-section mb-10 text-center font-bold text-white sm:mb-12">Why Women Love Mishfa Care</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {[
@@ -74,7 +74,7 @@ export default function WomenCare() {
             ].map((benefit, idx) => (
               <div
                 key={idx}
-                className="bg-gray-900 border border-amber-600 rounded-xl p-6 hover:shadow-lg hover:shadow-amber-600/30 transition-all"
+                className="responsive-card border border-amber-600 bg-gray-900 p-6 transition-all hover:shadow-lg hover:shadow-amber-600/30"
               >
                 <CheckCircle className="w-8 h-8 text-amber-500 mb-3" />
                 <h3 className="text-xl font-bold text-white mb-3">{benefit.title}</h3>
@@ -86,9 +86,9 @@ export default function WomenCare() {
       </section>
 
       {/* Product Variants */}
-      <section className="py-20 border-t border-amber-600 bg-gradient-to-r from-gray-900 to-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-white mb-12">Our Collections</h2>
+      <section className="section-y border-t border-amber-600 bg-gradient-to-r from-gray-900 to-black">
+        <div className="site-container">
+          <h2 className="heading-section mb-10 text-center font-bold text-white sm:mb-12">Our Collections</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -113,22 +113,22 @@ export default function WomenCare() {
             ].map((product, idx) => (
               <div
                 key={idx}
-                className="group relative rounded-xl overflow-hidden border border-amber-600 hover:shadow-2xl hover:shadow-amber-600/50 transition-all"
+                 className="group responsive-card relative overflow-hidden border border-amber-600 transition-all hover:shadow-2xl hover:shadow-amber-600/50"
               >
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-96 object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="h-80 w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-105 sm:h-96"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"></div>
 
-                <div className="absolute bottom-0 left-0 right-0 p-6 translate-y-10 group-hover:translate-y-0 transition-transform">
+                <div className="absolute bottom-0 left-0 right-0 translate-y-0 p-4 transition-transform sm:p-6 md:translate-y-10 md:group-hover:translate-y-0">
                   <p className="text-amber-400 text-sm font-semibold mb-2">{product.highlight}</p>
                   <h3 className="text-2xl font-bold text-white mb-2">{product.name}</h3>
                   <p className="text-gray-300 mb-4">{product.description}</p>
                   <Link
                     to="/products"
-                    className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold transition-all"
+                    className="focus-ring touch-button gap-2 rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white transition-all hover:bg-amber-700"
                   >
                     Shop <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -140,9 +140,9 @@ export default function WomenCare() {
       </section>
 
       {/* Period Care Guide */}
-      <section className="py-20 border-t border-amber-600">
+      <section className="section-y border-t border-amber-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-white mb-12">Period Care Guide</h2>
+          <h2 className="heading-section mb-10 text-center font-bold text-white sm:mb-12">Period Care Guide</h2>
 
           <div className="space-y-6">
             {[
@@ -174,15 +174,15 @@ export default function WomenCare() {
                 ],
               },
             ].map((section, idx) => (
-              <div key={idx} className="bg-gray-900 border border-amber-600 rounded-xl p-8">
-                <div className="flex items-center gap-3 mb-4">
+              <div key={idx} className="responsive-card border border-amber-600 bg-gray-900 p-5 sm:p-8">
+                <div className="mb-4 flex items-start gap-3">
                   <Sparkles className="w-6 h-6 text-amber-500" />
                   <h3 className="text-2xl font-bold text-white">{section.title}</h3>
                 </div>
                 <ul className="space-y-3">
                   {section.tips.map((tip, i) => (
-                    <li key={i} className="flex items-center gap-3 text-gray-300">
-                      <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                    <li key={i} className="flex items-start gap-3 text-gray-300">
+                      <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-amber-500"></div>
                       {tip}
                     </li>
                   ))}
@@ -204,9 +204,9 @@ export default function WomenCare() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 border-t border-amber-600 bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-center text-white mb-12">Trusted by Women</h2>
+      <section className="section-y border-t border-amber-600 bg-gray-900">
+        <div className="site-container">
+          <h2 className="heading-section mb-10 text-center font-bold text-white sm:mb-12">Trusted by Women</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -223,7 +223,7 @@ export default function WomenCare() {
                 author: 'Reema S.',
               },
             ].map((testimonial, idx) => (
-              <div key={idx} className="bg-black border border-amber-600 rounded-lg p-6 hover:shadow-lg hover:shadow-amber-600/30 transition-all">
+              <div key={idx} className="responsive-card border border-amber-600 bg-black p-6 transition-all hover:shadow-lg hover:shadow-amber-600/30">
                 <p className="text-amber-400 text-2xl mb-3">"</p>
                 <p className="text-gray-300 mb-4 italic">{testimonial.quote}</p>
                 <p className="text-amber-500 font-semibold">— {testimonial.author}</p>
@@ -234,12 +234,12 @@ export default function WomenCare() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 border-t border-amber-600">
+      <section className="border-t border-amber-600 py-12 sm:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">Ready to Experience Mishfa Care?</h2>
           <Link
             to="/products"
-            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-8 py-4 rounded-lg font-semibold transition-all transform hover:scale-105"
+            className="focus-ring touch-button gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-4 font-semibold text-white transition-all hover:from-amber-600 hover:to-amber-700 motion-safe:hover:scale-105"
           >
             Shop Women Care <ArrowRight className="w-5 h-5" />
           </Link>

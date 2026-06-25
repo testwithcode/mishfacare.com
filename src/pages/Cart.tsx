@@ -41,7 +41,7 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <div className="bg-black min-h-screen pt-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="mx-auto max-w-4xl px-4 py-12 text-center sm:px-6 sm:py-16 lg:px-8 lg:py-20">
           <ShoppingCart className="w-16 h-16 text-gray-600 mx-auto mb-6" />
           <h1 className="text-4xl font-bold text-white mb-4">Your Cart is Empty</h1>
           <p className="text-gray-400 mb-8 text-lg">
@@ -49,7 +49,7 @@ export default function Cart() {
           </p>
           <Link
             to="/products"
-            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-8 py-4 rounded-lg font-semibold transition-all transform hover:scale-105"
+            className="focus-ring touch-button gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-4 font-semibold text-white transition-all hover:from-amber-600 hover:to-amber-700 motion-safe:hover:scale-105"
           >
             <ArrowLeft className="w-5 h-5" />
             Continue Shopping
@@ -64,7 +64,7 @@ export default function Cart() {
 
   return (
     <div className="bg-black min-h-screen pt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="site-container py-8 sm:py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-white mb-2">Shopping Cart</h1>
           <p className="text-gray-400">
@@ -78,19 +78,19 @@ export default function Cart() {
             {items.map((item) => (
               <div
                 key={item.product.id}
-                className="bg-gray-900 border border-amber-600 rounded-lg p-6 flex flex-col md:flex-row gap-6 hover:shadow-lg hover:shadow-amber-600/30 transition-all"
+                 className="responsive-card flex flex-col gap-4 border border-amber-600 bg-gray-900 p-4 transition-all hover:shadow-lg hover:shadow-amber-600/30 sm:p-6 lg:flex-row lg:gap-6"
               >
                 <img
                   src={item.product.image_url}
                   alt={item.product.name}
-                  className="w-24 h-24 object-cover rounded-lg flex-shrink-0"
+                  className="h-24 w-24 flex-shrink-0 rounded-lg object-cover sm:h-28 sm:w-28"
                 />
 
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-2">{item.product.name}</h3>
-                  <p className="text-gray-400 text-sm mb-4">{item.product.description}</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="mb-2 break-words text-xl font-bold text-white">{item.product.name}</h3>
+                  <p className="mb-4 break-words text-sm text-gray-400">{item.product.description}</p>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <p className="text-2xl font-bold text-amber-400">₹{item.product.price}/- INR</p>
+                    <p className="break-words text-xl font-bold text-amber-400 sm:text-2xl">₹{item.product.price}/- INR</p>
                     {item.product.original_price && item.product.original_price > item.product.price && (
                       <span className="text-sm text-gray-500 line-through">₹{item.product.original_price}</span>
                     )}
@@ -100,19 +100,21 @@ export default function Cart() {
                   </div>
                 </div>
 
-                <div className="flex flex-col justify-between items-end gap-4">
+                <div className="flex flex-col items-stretch justify-between gap-4 sm:items-end">
                   <button
                     onClick={() => handleRemoveItem(item.product.id)}
-                    className="text-red-500 hover:text-red-700 transition-colors p-2 hover:bg-red-600 hover:bg-opacity-20 rounded-lg"
+                    aria-label={`Remove ${item.product.name} from cart`}
+                    className="focus-ring touch-button min-w-11 rounded-lg p-2 text-red-500 transition-colors hover:bg-red-600 hover:bg-opacity-20 hover:text-red-700 sm:self-end"
                     title="Remove item from cart"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
 
-                  <div className="flex items-center gap-3 border border-amber-600 rounded-lg bg-black">
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-600 bg-black sm:justify-start">
                     <button
                       onClick={() => handleUpdateQuantity(item.product.id, item.quantity - 1)}
-                      className="px-3 py-2 text-amber-400 hover:bg-amber-600 hover:text-white transition-colors"
+                      className="focus-ring min-h-11 min-w-11 rounded-l-lg px-3 py-2 text-amber-400 transition-colors hover:bg-amber-600 hover:text-white"
+                      aria-label={`Decrease quantity for ${item.product.name}`}
                       title="Decrease quantity"
                     >
                       −
@@ -120,7 +122,8 @@ export default function Cart() {
                     <span className="px-4 text-white font-semibold min-w-8 text-center">{item.quantity}</span>
                     <button
                       onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
-                      className="px-3 py-2 text-amber-400 hover:bg-amber-600 hover:text-white transition-colors"
+                      className="focus-ring min-h-11 min-w-11 rounded-r-lg px-3 py-2 text-amber-400 transition-colors hover:bg-amber-600 hover:text-white"
+                      aria-label={`Increase quantity for ${item.product.name}`}
                       title="Increase quantity"
                     >
                       +
@@ -137,7 +140,7 @@ export default function Cart() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 border border-amber-600 rounded-lg p-6 sticky top-24">
+             <div className="rounded-lg border border-amber-600 bg-gray-900 p-4 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-2xl font-bold text-white mb-6">Order Summary</h2>
 
               <div className="space-y-4 mb-6 pb-6 border-b border-amber-600">
@@ -164,21 +167,21 @@ export default function Cart() {
 
               <Link
                 to="/checkout"
-                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-8 py-4 rounded-lg font-semibold transition-all transform hover:scale-105 mb-3"
+                className="focus-ring touch-button mb-3 w-full gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-4 font-semibold text-white transition-all hover:from-amber-600 hover:to-amber-700 motion-safe:hover:scale-105"
               >
                 Proceed to Checkout <ArrowRight className="w-5 h-5" />
               </Link>
 
               <button
                 onClick={handleClearCart}
-                className="w-full border border-red-600 text-red-400 hover:bg-red-600 hover:text-white px-8 py-2 rounded-lg font-semibold transition-all mb-3"
+                className="focus-ring touch-button mb-3 w-full rounded-lg border border-red-600 px-8 py-3 font-semibold text-red-400 transition-all hover:bg-red-600 hover:text-white"
               >
                 Clear Cart
               </button>
 
               <Link
                 to="/products"
-                className="w-full inline-flex items-center justify-center gap-2 text-amber-400 hover:text-amber-300 hover:bg-amber-600 hover:bg-opacity-10 px-8 py-2 rounded-lg font-semibold transition-colors"
+                className="focus-ring touch-button w-full gap-2 rounded-lg px-8 py-3 font-semibold text-amber-400 transition-colors hover:bg-amber-600 hover:bg-opacity-10 hover:text-amber-300"
               >
                 <ArrowLeft className="w-5 h-5" />
                 Continue Shopping

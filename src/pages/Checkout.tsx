@@ -225,7 +225,7 @@ export default function Checkout() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="site-container py-8 sm:py-12">
         <motion.div
           className="mb-12"
           initial={{ opacity: 0, y: 18 }}
@@ -233,8 +233,8 @@ export default function Checkout() {
           transition={{ duration: 0.45 }}
         >
           <h1 className="text-4xl font-bold text-white mb-4">Checkout</h1>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            <Link to="/cart" className="hover:text-amber-400">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 sm:gap-4">
+            <Link to="/cart" className="focus-ring rounded hover:text-amber-400">
               Cart
             </Link>
             <span className="text-gray-600">›</span>
@@ -261,15 +261,15 @@ export default function Checkout() {
             )}
 
             {/* Coupon Section */}
-            <div className="bg-gradient-to-r from-amber-900 to-black border border-amber-600 rounded-lg p-6 mb-8">
+             <div className="mb-8 rounded-lg border border-amber-600 bg-gradient-to-r from-amber-900 to-black p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Tag className="w-5 h-5 text-amber-500" />
                 <h3 className="text-xl font-bold text-white">Apply Coupon Code</h3>
               </div>
 
               {appliedCoupon ? (
-                <div className="bg-green-600 bg-opacity-20 border border-green-600 rounded-lg p-4 flex items-center justify-between">
-                  <div>
+                 <div className="flex flex-col gap-4 rounded-lg border border-green-600 bg-green-600 bg-opacity-20 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0 break-words">
                     <p className="text-white font-bold">Coupon Applied!</p>
                     <p className="text-green-300">Code: {appliedCoupon.code}</p>
                     <p className="text-green-300">
@@ -281,13 +281,13 @@ export default function Checkout() {
                       setAppliedCoupon(null);
                       setCouponError('');
                     }}
-                    className="text-red-400 hover:text-red-300 font-semibold"
+                    className="focus-ring touch-button self-start rounded px-3 py-2 font-semibold text-red-400 hover:text-red-300 sm:self-auto"
                   >
                     Remove
                   </button>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={couponCode}
@@ -296,13 +296,13 @@ export default function Checkout() {
                       setCouponError('');
                     }}
                     placeholder="Enter coupon code"
-                    className="flex-1 bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="form-control flex-1 border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                   <button
                     type="button"
                     onClick={handleApplyCoupon}
                     disabled={couponLoading}
-                    className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition-all"
+                    className="focus-ring touch-button rounded-lg bg-amber-600 px-6 py-3 font-semibold text-white transition-all hover:bg-amber-700 disabled:bg-gray-600"
                   >
                     {couponLoading ? 'Checking...' : 'Apply'}
                   </button>
@@ -314,7 +314,7 @@ export default function Checkout() {
 
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Personal Information */}
-              <div className="bg-gray-900 border border-amber-600 rounded-lg p-6">
+              <div className="rounded-lg border border-amber-600 bg-gray-900 p-4 sm:p-6">
                 <h2 className="text-2xl font-bold text-white mb-6">Personal Information</h2>
 
                 <div className="space-y-4">
@@ -327,7 +327,7 @@ export default function Checkout() {
                         value={formData.customer_name}
                         onChange={handleChange}
                         required
-                        className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                         className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
 
@@ -339,7 +339,7 @@ export default function Checkout() {
                         value={formData.customer_email}
                         onChange={handleChange}
                         required
-                        className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                         className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
                   </div>
@@ -352,14 +352,14 @@ export default function Checkout() {
                       value={formData.customer_phone}
                       onChange={handleChange}
                       required
-                      className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                       className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Delivery Address */}
-              <div className="bg-gray-900 border border-amber-600 rounded-lg p-6">
+              <div className="rounded-lg border border-amber-600 bg-gray-900 p-4 sm:p-6">
                 <h2 className="text-2xl font-bold text-white mb-6">Delivery Address</h2>
 
                 <div className="space-y-4">
@@ -372,7 +372,7 @@ export default function Checkout() {
                       onChange={handleChange}
                       placeholder="Street address"
                       required
-                      className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                       className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
 
@@ -385,7 +385,7 @@ export default function Checkout() {
                         value={formData.city}
                         onChange={handleChange}
                         required
-                        className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                         className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
 
@@ -397,7 +397,7 @@ export default function Checkout() {
                         value={formData.state}
                         onChange={handleChange}
                         required
-                        className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                         className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
 
@@ -409,7 +409,7 @@ export default function Checkout() {
                         value={formData.pincode}
                         onChange={handleChange}
                         required
-                        className="w-full bg-black border border-amber-600 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                         className="form-control border border-amber-600 bg-black px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
                   </div>
@@ -417,7 +417,7 @@ export default function Checkout() {
               </div>
 
               {/* Payment Method */}
-              <div className="bg-gray-900 border border-amber-600 rounded-lg p-6">
+              <div className="rounded-lg border border-amber-600 bg-gray-900 p-4 sm:p-6">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                   <Lock className="w-6 h-6 text-amber-500" />
                   Payment Method
@@ -429,7 +429,7 @@ export default function Checkout() {
                     { value: 'upi', label: 'UPI Payment' },
                     { value: 'card', label: 'Credit/Debit Card' },
                   ].map((method) => (
-                    <label key={method.value} className="flex items-center gap-3 p-4 bg-black border border-amber-600 rounded-lg cursor-pointer hover:border-amber-400 transition-colors">
+                    <label key={method.value} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-amber-600 bg-black p-4 transition-colors hover:border-amber-400">
                       <input
                         type="radio"
                         name="payment_method"
@@ -438,7 +438,7 @@ export default function Checkout() {
                         onChange={handleChange}
                         className="w-5 h-5 accent-amber-500"
                       />
-                      <span className="text-white font-semibold">{method.label}</span>
+                       <span className="break-words font-semibold text-white">{method.label}</span>
                     </label>
                   ))}
                 </div>
@@ -454,7 +454,7 @@ export default function Checkout() {
                 <button
                   type="submit"
                   disabled={loading || success}
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg"
+                  className="focus-ring touch-button w-full gap-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:from-amber-600 hover:to-amber-700 disabled:from-gray-600 disabled:to-gray-700 motion-safe:hover:scale-105"
                 >
                   {loading ? 'Processing Order...' : 'Place Order'} {!loading && <ArrowRight className="w-5 h-5" />}
                 </button>
@@ -463,7 +463,7 @@ export default function Checkout() {
                   href={whatsappOrderUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-3 bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all"
+                  className="focus-ring touch-button w-full gap-3 rounded-lg bg-green-600 px-8 py-4 text-lg font-bold text-white transition-all hover:bg-green-700"
                 >
                   <WhatsAppIcon className="w-5 h-5" />
                   Order on WhatsApp
@@ -474,38 +474,38 @@ export default function Checkout() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-gray-900 border border-amber-600 rounded-lg p-6 sticky top-24">
+             <div className="rounded-lg border border-amber-600 bg-gray-900 p-4 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-2xl font-bold text-white mb-6">Order Summary</h2>
 
               <div className="space-y-4 mb-6 pb-6 border-b border-amber-600 max-h-80 overflow-y-auto">
                 {items.map((item) => (
-                  <div key={item.product.id} className="flex justify-between text-gray-300 text-sm">
-                    <span>{item.product.name} x {item.quantity}</span>
-                    <span>₹{item.product.price * item.quantity}</span>
+                  <div key={item.product.id} className="flex min-w-0 justify-between gap-3 text-sm text-gray-300">
+                    <span className="min-w-0 break-words">{item.product.name} x {item.quantity}</span>
+                    <span className="shrink-0">₹{item.product.price * item.quantity}</span>
                   </div>
                 ))}
               </div>
 
               <div className="space-y-3 mb-6 pb-6 border-b border-amber-600">
-                <div className="flex justify-between text-gray-300">
+                <div className="flex justify-between gap-3 text-gray-300">
                   <span>Subtotal:</span>
                   <span>₹{total.toFixed(0)}</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-400 font-semibold">
+                  <div className="flex justify-between gap-3 font-semibold text-green-400">
                     <span>Discount:</span>
                     <span>-₹{discountAmount.toFixed(0)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-gray-300">
+                <div className="flex justify-between gap-3 text-gray-300">
                   <span>Subtotal after discount:</span>
                   <span>₹{subtotalAfterDiscount.toFixed(0)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300">
+                <div className="flex justify-between gap-3 text-gray-300">
                   <span>Shipping:</span>
                   <span className="text-green-400">Free</span>
                 </div>
-                <div className="flex justify-between text-gray-300">
+                <div className="flex justify-between gap-3 text-gray-300">
                   <span>Tax (18%):</span>
                   <span>₹{tax.toFixed(0)}</span>
                 </div>
@@ -518,7 +518,7 @@ export default function Checkout() {
 
               <Link
                 to="/cart"
-                className="w-full inline-flex items-center justify-center gap-2 text-amber-400 hover:text-amber-300 px-4 py-2 rounded-lg font-semibold transition-colors mt-6"
+                className="focus-ring touch-button mt-6 w-full gap-2 rounded-lg px-4 py-3 font-semibold text-amber-400 transition-colors hover:text-amber-300"
               >
                 Edit Cart
               </Link>

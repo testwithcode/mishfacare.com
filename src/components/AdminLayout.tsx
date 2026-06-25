@@ -34,17 +34,17 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-black">
       <header className="sticky top-0 z-40 border-b border-amber-600 bg-gradient-to-r from-gray-900 to-black">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
           <div className="min-w-0">
-            <h1 className="truncate text-2xl font-bold text-white sm:text-4xl">{title}</h1>
+            <h1 className="truncate text-xl font-bold text-white sm:text-4xl">{title}</h1>
             <p className="mt-1 hidden text-gray-400 sm:block">{description}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             {onRefresh && (
               <button
                 onClick={onRefresh}
                 disabled={refreshing}
-                className="hidden items-center gap-2 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition-all hover:bg-amber-700 disabled:opacity-50 sm:inline-flex"
+                className="focus-ring touch-button hidden items-center gap-2 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition-all hover:bg-amber-700 disabled:opacity-50 sm:inline-flex"
               >
                 <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -52,7 +52,8 @@ export default function AdminLayout({
             )}
             <button
               onClick={() => setSidebarOpen((open) => !open)}
-              className="inline-flex items-center gap-2 rounded-lg border border-amber-600 bg-black px-4 py-3 font-semibold text-white transition-all hover:bg-gray-900 lg:hidden"
+              className="focus-ring touch-button inline-flex min-w-11 items-center gap-2 rounded-lg border border-amber-600 bg-black px-3 py-3 font-semibold text-white transition-all hover:bg-gray-900 sm:px-4 lg:hidden"
+              aria-label={sidebarOpen ? 'Close admin menu' : 'Open admin menu'}
               aria-controls="admin-sidebar"
               aria-expanded={sidebarOpen}
             >
@@ -71,15 +72,15 @@ export default function AdminLayout({
         />
       )}
 
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8 lg:py-12">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8 lg:px-8 lg:py-12">
         <aside
           id="admin-sidebar"
-          className={`fixed bottom-0 left-0 top-[81px] z-30 w-72 overflow-y-auto border-r border-amber-600 bg-gray-950 p-4 transition-transform lg:sticky lg:top-[105px] lg:z-auto lg:h-[calc(100vh-129px)] lg:w-auto lg:translate-x-0 lg:rounded-xl lg:border ${
+          className={`fixed bottom-0 left-0 top-[73px] z-30 w-[min(18rem,85vw)] overflow-y-auto border-r border-amber-600 bg-gray-950 p-4 transition-transform lg:sticky lg:top-[105px] lg:z-auto lg:h-[calc(100dvh-129px)] lg:w-auto lg:translate-x-0 lg:rounded-xl lg:border ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           <div className="mb-6">
-            <Link to="/admin/dashboard" className="block text-xl font-bold text-white">
+            <Link to="/admin/dashboard" className="focus-ring block rounded text-xl font-bold text-white">
               Mishfa Admin
             </Link>
             <p className="mt-1 text-sm text-gray-400">Operations panel</p>
@@ -92,13 +93,13 @@ export default function AdminLayout({
                 to={item.to}
                 onClick={() => setSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-4 py-3 font-semibold transition-all ${
+                  `focus-ring flex min-h-11 items-center gap-3 rounded-lg px-4 py-3 font-semibold transition-all ${
                     isActive ? 'bg-amber-600 text-white' : 'text-gray-300 hover:bg-gray-900 hover:text-white'
                   }`
                 }
               >
-                <item.icon className="h-5 w-5" />
-                {item.label}
+                <item.icon className="h-5 w-5 shrink-0" />
+                <span className="min-w-0 break-words">{item.label}</span>
               </NavLink>
             ))}
           </nav>
@@ -108,7 +109,7 @@ export default function AdminLayout({
               <button
                 onClick={onRefresh}
                 disabled={refreshing}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition-all hover:bg-amber-700 disabled:opacity-50 sm:hidden"
+                className="focus-ring touch-button w-full gap-2 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition-all hover:bg-amber-700 disabled:opacity-50 sm:hidden"
               >
                 <RefreshCw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
@@ -116,7 +117,7 @@ export default function AdminLayout({
             )}
             <button
               onClick={handleLogout}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 font-semibold text-white transition-all hover:bg-red-700"
+              className="focus-ring touch-button w-full gap-2 rounded-lg bg-red-600 px-4 py-3 font-semibold text-white transition-all hover:bg-red-700"
             >
               <LogOut className="h-5 w-5" />
               Logout

@@ -232,7 +232,8 @@ export default function ChatBot() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all transform hover:scale-110 animate-bounce"
+        aria-label="Open Mishfa Care chat assistant"
+        className="focus-ring fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-4 z-40 min-h-14 min-w-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 p-4 text-white shadow-lg transition-all hover:from-amber-600 hover:to-amber-700 hover:shadow-xl motion-safe:animate-bounce motion-safe:hover:scale-110 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))] sm:right-6"
       >
         <MessageCircle className="w-6 h-6" />
       </button>
@@ -240,12 +241,13 @@ export default function ChatBot() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 h-[70vh] w-[calc(100vw-2rem)] max-w-96 bg-black border border-amber-600 rounded-lg shadow-2xl flex flex-col animate-fadeIn md:h-auto md:max-h-[600px]">
-      <div className="bg-gradient-to-r from-amber-600 to-amber-700 text-white p-4 rounded-t-lg flex justify-between items-center">
-        <h3 className="font-bold">Mishfa Care Assistant</h3>
+    <div className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex max-h-[calc(100dvh-2rem)] min-h-[24rem] flex-col rounded-lg border border-amber-600 bg-black shadow-2xl animate-fadeIn sm:left-auto sm:right-6 sm:w-[calc(100vw-2rem)] sm:max-w-96 md:max-h-[600px]">
+      <div className="flex items-center justify-between gap-3 rounded-t-lg bg-gradient-to-r from-amber-600 to-amber-700 p-3 text-white sm:p-4">
+        <h3 className="min-w-0 truncate font-bold">Mishfa Care Assistant</h3>
         <button
           onClick={() => setIsOpen(false)}
-          className="hover:bg-amber-700 p-1 rounded transition-colors"
+          aria-label="Close chat assistant"
+          className="focus-ring touch-button min-w-11 rounded transition-colors hover:bg-amber-700"
         >
           <X className="w-5 h-5" />
         </button>
@@ -258,7 +260,7 @@ export default function ChatBot() {
             className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-xs px-4 py-2 rounded-lg ${
+              className={`max-w-[min(18rem,85vw)] break-words px-4 py-2 rounded-lg ${
                 msg.sender === 'user'
                   ? 'bg-amber-600 text-white rounded-br-none'
                   : 'bg-gray-800 text-gray-100 rounded-bl-none border border-amber-600'
@@ -278,7 +280,7 @@ export default function ChatBot() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-amber-600 p-4 flex gap-2">
+       <div className="flex gap-2 border-t border-amber-600 p-3 sm:p-4">
         <input
           type="text"
           value={input}
@@ -290,12 +292,13 @@ export default function ChatBot() {
             }
           }}
           placeholder="Ask about period care, products, or women's hygiene..."
-          className="flex-1 bg-gray-900 text-white border border-amber-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="form-control flex-1 border border-amber-600 bg-gray-900 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
           disabled={isLoadingReply}
         />
         <button
           onClick={() => void handleSend()}
-          className="bg-amber-600 hover:bg-amber-700 disabled:bg-gray-700 text-white p-2 rounded transition-colors"
+          aria-label="Send chat message"
+          className="focus-ring touch-button min-w-11 rounded bg-amber-600 p-2 text-white transition-colors hover:bg-amber-700 disabled:bg-gray-700"
           disabled={isLoadingReply || !input.trim()}
         >
           <Send className="w-5 h-5" />
