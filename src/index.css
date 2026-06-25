@@ -5,14 +5,28 @@
 @tailwind utilities;
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
     font-family: 'Manrope', sans-serif;
     background: #000;
     color: #fff;
+    overflow-x: hidden;
+    min-width: 320px;
+  }
+
+  #root {
+    min-height: 100vh;
+    overflow-x: hidden;
   }
 
   h1,
@@ -31,6 +45,51 @@
   select,
   textarea {
     font-family: 'Manrope', sans-serif;
+  }
+
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+  }
+}
+
+@layer components {
+  .site-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-y {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+
+  .page-hero {
+    @apply min-h-[calc(100dvh-5rem)] pt-20;
+  }
+
+  .heading-hero {
+    @apply text-4xl sm:text-5xl lg:text-6xl;
+  }
+
+  .heading-section {
+    @apply text-3xl sm:text-4xl lg:text-5xl;
+  }
+
+  .responsive-card {
+    @apply min-w-0 break-words rounded-lg;
+  }
+
+  .touch-button {
+    @apply inline-flex min-h-11 items-center justify-center;
+  }
+
+  .form-control {
+    @apply min-h-11 w-full min-w-0 rounded-lg;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black;
   }
 }
 
@@ -78,4 +137,39 @@
 .animate-fadeIn {
   animation: fadeIn 0.6s ease-out forwards;
   opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-slideInLeft,
+  .animate-slideInRight,
+  .animate-fadeIn,
+  .animate-bounce,
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+  }
+
+  .animate-fadeIn {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover {
+    transform: none !important;
+  }
 }
