@@ -429,12 +429,11 @@ export default function AdminProducts() {
       setSuccess('');
       setUpdatingProductStatusId(product.id);
 
-      const { data: updatedProduct, error: updateError } = await supabase
+      const { data: updatedProducts, error: updateError } = await supabase
         .from('products')
         .update({ is_active: nextStatus })
         .eq('id', product.id)
-        .select('*')
-        .single();
+        .select('id');
 
       if (updateError) {
         if (isMissingColumnError(updateError)) {
@@ -447,10 +446,14 @@ export default function AdminProducts() {
         throw updateError;
       }
 
+      if (!updatedProducts || updatedProducts.length === 0) {
+        throw new Error('Product status could not be saved. Check Supabase product update policies, then try again.');
+      }
+
       setProducts((currentProducts) =>
         currentProducts.map((currentProduct) =>
           currentProduct.id === product.id
-            ? normalizeProduct((updatedProduct ?? { ...currentProduct, is_active: nextStatus }) as Product)
+            ? normalizeProduct({ ...currentProduct, is_active: nextStatus })
             : currentProduct
         )
       );
