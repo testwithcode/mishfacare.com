@@ -6,6 +6,10 @@ import type { Product } from '../types';
 import { CATEGORY_LABELS, normalizeProduct } from '../lib/products';
 import AdminLayout from '../components/AdminLayout';
 
+const PRODUCT_IMAGE_BUCKET = 'product-images';
+const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_PRODUCT_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 function getErrorMessage(err: unknown, fallback: string) {
   if (err instanceof Error) return err.message;
 
@@ -36,6 +40,22 @@ function getMissingSchemaColumn(err: unknown) {
 function omitProductColumn<T extends Record<string, unknown>>(payload: T, column: string) {
   const { [column]: _omitted, ...remainingPayload } = payload;
   return remainingPayload;
+}
+
+function createSkuPrefix(name: string, category: Product['category']) {
+  const categoryPrefix = category
+    .split('_')
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+  const namePrefix = name
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 24);
+
+  return [categoryPrefix, namePrefix || 'PRODUCT'].filter(Boolean).join('-');
 }
 
 interface Coupon {
@@ -170,6 +190,19 @@ export default function AdminProducts() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!ALLOWED_PRODUCT_IMAGE_TYPES.includes(file.type)) {
+        setError('Please upload a JPG, PNG, WebP, or GIF image.');
+        e.target.value = '';
+        return;
+      }
+
+      if (file.size > MAX_PRODUCT_IMAGE_SIZE) {
+        setError('Please upload an image smaller than 5 MB.');
+        e.target.value = '';
+        return;
+      }
+
+      setError('');
       setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -182,21 +215,53 @@ export default function AdminProducts() {
   const uploadImage = async (file: File): Promise<string> => {
     try {
       setUploading(true);
-      const fileName = `${Date.now()}_${file.name}`;
+      const safeFileName = file.name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const fileName = `${Date.now()}_${safeFileName || 'product-image'}`;
       const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(fileName, file);
+        .from(PRODUCT_IMAGE_BUCKET)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false,
+        });
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('product-images').getPublicUrl(fileName);
+      const { data } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(fileName);
       return data.publicUrl;
     } catch (err) {
       console.error('Upload error:', err);
-      throw new Error('Failed to upload image');
+      const errorMsg = getErrorMessage(err, 'Failed to upload image');
+      throw new Error(
+        `Failed to upload image. ${errorMsg}. Confirm the ${PRODUCT_IMAGE_BUCKET} storage bucket exists and upload policies are applied.`
+      );
     } finally {
       setUploading(false);
     }
+  };
+
+  const generateProductSku = async (name: string, category: Product['category']) => {
+    const prefix = createSkuPrefix(name, category);
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const suffix = Math.random().toString(36).slice(2, 8).toUpperCase();
+      const sku = `${prefix}-${suffix}`;
+
+      const { data, error: skuError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('sku', sku)
+        .maybeSingle();
+
+      if (skuError) throw skuError;
+      if (!data) return sku;
+    }
+
+    return `${prefix}-${Date.now().toString(36).toUpperCase()}`;
   };
 
   const handleSaveProduct = async (e: React.FormEvent) => {
@@ -243,6 +308,8 @@ export default function AdminProducts() {
         setImagePreview('');
       }
 
+      const sku = formData.sku?.trim() || (await generateProductSku(formData.name, formData.category));
+
       const productData = {
         name: formData.name,
         category: formData.category,
@@ -250,7 +317,7 @@ export default function AdminProducts() {
         original_price: originalPrice ?? null,
         cost_price: costPrice ?? null,
         description: formData.description || '',
-        sku: formData.sku || '',
+        sku,
         stock_count: parseInt(formData.stock_count?.toString() || '0'),
         image_url: imageUrl || '',
       };
