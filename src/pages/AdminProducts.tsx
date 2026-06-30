@@ -28,6 +28,16 @@ function isMissingColumnError(err: unknown) {
   );
 }
 
+function getMissingSchemaColumn(err: unknown) {
+  const message = getErrorMessage(err, '');
+  return message.match(/'([^']+)' column/)?.[1];
+}
+
+function omitProductColumn<T extends Record<string, unknown>>(payload: T, column: string) {
+  const { [column]: _omitted, ...remainingPayload } = payload;
+  return remainingPayload;
+}
+
 interface Coupon {
   id: string;
   code: string;
@@ -249,37 +259,37 @@ export default function AdminProducts() {
         ? { ...productData, is_active: formData.is_active ?? true }
         : productData;
 
-      if (editingProduct) {
-        let { error: updateError } = await supabase
-          .from('products')
-          .update(productPayload)
-          .eq('id', editingProduct.id);
+      const saveProduct = async (payload: typeof productPayload) => {
+        let currentPayload = payload;
 
-        if (updateError && supportsProductStatus && isMissingColumnError(updateError)) {
-          setSupportsProductStatus(false);
-          setStatusFilter('all');
-          const retryResult = await supabase
-            .from('products')
-            .update(productData)
-            .eq('id', editingProduct.id);
-          updateError = retryResult.error;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          const result = editingProduct
+            ? await supabase.from('products').update(currentPayload).eq('id', editingProduct.id)
+            : await supabase.from('products').insert([currentPayload]);
+
+          if (!result.error || !isMissingColumnError(result.error)) return result.error;
+
+          const missingColumn = getMissingSchemaColumn(result.error);
+          if (!missingColumn || !(missingColumn in currentPayload)) return result.error;
+
+          if (missingColumn === 'is_active') {
+            setSupportsProductStatus(false);
+            setStatusFilter('all');
+          }
+
+          currentPayload = omitProductColumn(currentPayload, missingColumn) as typeof productPayload;
         }
+
+        return new Error('Product could not be saved because required database columns are missing.');
+      };
+
+      if (editingProduct) {
+        const updateError = await saveProduct(productPayload);
 
         if (updateError) throw updateError;
         setSuccess('Product updated successfully!');
       } else {
-        let { error: insertError } = await supabase
-          .from('products')
-          .insert([productPayload]);
-
-        if (insertError && supportsProductStatus && isMissingColumnError(insertError)) {
-          setSupportsProductStatus(false);
-          setStatusFilter('all');
-          const retryResult = await supabase
-            .from('products')
-            .insert([productData]);
-          insertError = retryResult.error;
-        }
+        const insertError = await saveProduct(productPayload);
 
         if (insertError) throw insertError;
         setSuccess('Product added successfully!');
